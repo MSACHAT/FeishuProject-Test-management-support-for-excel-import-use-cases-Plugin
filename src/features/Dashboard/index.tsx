@@ -1,5 +1,5 @@
 import { hot } from 'react-hot-loader/root';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { Upload, Button, Modal, Steps } from '@douyinfe/semi-ui';
 import { IconUpload } from '@douyinfe/semi-icons';
 import './index.less';
@@ -9,10 +9,10 @@ const STEP_1_UPLOAD = 0;
 const STEP_2_PREVIEW = 1;
 const STEP_3_FINISH = 2;
 
-type parsedExcelData={}
+const SetFileNameContext = React.createContext((filename: string) => {
+});
 
-const ProgressComponent = ({ currentStep }: { currentStep: number }) => {
-  /*
+/*
   此处封装了弹窗中每一步对应的页面
 
   参数:
@@ -22,33 +22,48 @@ const ProgressComponent = ({ currentStep }: { currentStep: number }) => {
 
   需要注意:currentStep的索引是从0开始的
    */
-  const [parsedExcelData, setParsedExcelData] = useState();
+const ProgressComponent = ({ currentStep }: { currentStep: number }) => {
+  const [parsedExcelData, setParsedExcelData] = useState<any>([]);
+  const [fileName, setFileName] = useState<string>('还未选择文件');
+
+  /*
+   此处封装了每一步独特的页面的组件
+
+   参数:无
+
+   返回值:progress组件
+    */
   const StepContent = () => {
-    /*
-    此处封装了每一步独特的页面的组件
-
-    参数:无
-
-    返回值:progress组件
-     */
     switch (currentStep) {
       case STEP_1_UPLOAD:
-        return <UploadComponent callBack={() => {
-        }} />;
+        return <>
+          <SetFileNameContext.Provider value={(filename: string) => setFileName(filename)}>
+            <UploadComponent callBack={setParsedExcelData} />
+          </SetFileNameContext.Provider>
+          <br />
+          {fileName}
+        </>;
       case STEP_2_PREVIEW:
-        return <div>2</div>;
+        return <div>
+          {parsedExcelData.map((data) => {
+            let newData: string[] = [];
+            for (let dat of Object.keys(data)) {
+              newData.push(`${dat}:${data[dat]} \n`);
+            }
+            return newData;
+          })}
+        </div>;
       case STEP_3_FINISH:
         return <div>wancheng</div>;
     }
-    return <UploadComponent callBack={() => {
-    }} />;
+    return <UploadComponent callBack={setParsedExcelData} />;
   };
   return (
     <>
       <Steps type="basic" current={currentStep} onChange={(i) => console.log(i)}>
-        <Steps.Step title="Finished" description="This is a description" />
-        <Steps.Step title="In Progress" description="This is a description" />
-        <Steps.Step title="Waiting" description="This is a description" />
+        <Steps.Step title="第三步:完成" description="大功告成" />
+        <Steps.Step title="第二步:预览" description="预览导入的结果" />
+        <Steps.Step title="第一步:导入" description="导入xlsx. csv. 格式的文件" />
       </Steps>
       <StepContent />
     </>
@@ -56,8 +71,7 @@ const ProgressComponent = ({ currentStep }: { currentStep: number }) => {
     ;
 };
 
-const UploadComponent = ({ callBack }) => {
-  /*
+/*
   此处封装了一个上传按钮
 
   参数:
@@ -65,16 +79,20 @@ const UploadComponent = ({ callBack }) => {
 
   返回值:UploadComponent组件
   */
+const UploadComponent = ({ callBack }) => {
+  const setFileName = useContext(SetFileNameContext);
+
+  /*
+   此函数会在用户上传完文件后执行，作用是对文件进行解析
+
+   参数:
+     1. file: semi的Upload组件会把用户上传的文件传入此参数
+
+   返回值:false,由于没有后端所以直接返回false防止Upload组件自动上传
+    */
   const handleBeforeUpload = (file) => {
-    /*
-    此函数会在用户上传完文件后执行，作用是对文件进行解析
-
-    参数:
-      1. file: semi的Upload组件会把用户上传的文件传入此参数
-
-    返回值:false,由于没有后端所以直接返回false防止Upload组件自动上传
-     */
     const blob = file.file.fileInstance;
+    setFileName(blob.name);
     const reader = new FileReader();
     reader.onload = (e) => {//当文件读取完成时onload就会被触发
       if (e.target && e.target.result) {
@@ -89,7 +107,7 @@ const UploadComponent = ({ callBack }) => {
       }
     };
     reader.readAsArrayBuffer(blob);
-    return false;
+    return true;
   };
 
   const UploadButton = (
