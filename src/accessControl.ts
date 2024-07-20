@@ -12,11 +12,12 @@ export function authorize(code) {
 }
 
 export const visibilityControl = async (type, key) => {
+
   return new Promise((resolve, reject) => {
     if (type === 'DASHBOARD') {
       resolve(true);
     } else {
-      resolve(true);
+      resolve(false);
     }
   });
 };

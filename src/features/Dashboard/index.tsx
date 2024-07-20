@@ -6,6 +6,19 @@ import { IconFile, IconHelpCircle } from '@douyinfe/semi-icons';
 import * as XLSX from 'xlsx';
 import Meta from '@douyinfe/semi-ui/lib/es/card/meta';
 import { BeforeUploadProps } from '@douyinfe/semi-ui/lib/es/upload';
+import SDK from '@lark-project/js-sdk';
+import axios from 'axios';
+
+const HEADERS = {
+  headers: {
+    'X-PLUGIN-TOKEN': 'v-5fd45a22-79b4-452a-8580-54fe35022524',
+    'X-USER-KEY': '7391674093034127364',
+    'Content-Type': 'application/json',
+  },
+};
+const BASE_URL = 'https://project.feishu.cn';
+
+const sdk = new SDK();
 
 const STEP_1_UPLOAD = 0;
 const STEP_2_PREVIEW = 1;
@@ -17,7 +30,8 @@ const SetCurrentErrorContext = React.createContext((currentErr: string) => {
 });
 const SetFileNameContext = React.createContext((filename: string) => {
 });
-const SetFileContext = React.createContext((file:File)=>{})
+const SetFileContext = React.createContext((file: File) => {
+});
 
 //创建一个在页面顶部且置顶的弹窗
 const ToastOnTop = ToastFactory.create({
@@ -31,7 +45,7 @@ const ToastOnTop = ToastFactory.create({
 
    返回值:progress组件
     */
-const StepContent = ({ currentStep, parsedExcelData, setParsedExcelData }) => {
+const StepContent = ({ currentStep }) => {
   const [fileName, setFileName] = useState<string>('');
   const [file, setFile] = useState<File>();
 
@@ -39,22 +53,42 @@ const StepContent = ({ currentStep, parsedExcelData, setParsedExcelData }) => {
   此处封装了用于检查表格是否存在错误的函数
 
   参数:
-    1. worksheet:类型未XLSX.Worksheet的参数，也就是一个表格
+    1. headline:表头
 
   返回值:
-    1. 没有错误: {hasError:false, errMessage:""}
-    2. 有错误: {hasError:true, errMessage:<错误信息>
+    1. 没有错误: {hasError:false, errFields:[]}
+    2. 有错误: {hasError:true, errFields:[<有问题的字段>]
    */
-  const checkErr=(worksheet:XLSX.WorkSheet)=>{
+  const checkErr = async (headline: string[]): Promise<{ hasError: boolean, errFields: string[] }> => {
+    const context = await sdk.Context.load();
+    const projectKey = context.mainSpace?.id;
+    const workItemTypeKey = context.activeWorkItem?.workObjectId;
+    const fields = await axios.post(`${BASE_URL}/open_api/${projectKey}/field/all`, {
+      work_item_type_key: workItemTypeKey,
+    }, HEADERS);
+    //获取所有表头
+    const fieldNames = fields.data.data.map((field: { field_name: string; }) => field.field_name);
+    //用于记录有问题的字段
+    let errorFields: string[] = [];
+    headline.forEach((field) => {
+      if (fieldNames.findIndex(field) == -1) {
+        errorFields.push(field);
+      }
+    });
+    if (!errorFields) {
+      return { hasError: false, errFields: [] };
+    } else {
+      return { hasError: true, errFields: errorFields };
+    }
 
-  }
+  };
 
   switch (currentStep) {
     case STEP_1_UPLOAD:
       return <>
         <SetFileNameContext.Provider value={(filename: string) => setFileName(filename)}>
           <SetFileContext.Provider value={(file) => setFile(file)}>
-            <UploadComponent callBack={setParsedExcelData} />
+            <UploadComponent />
           </SetFileContext.Provider>
         </SetFileNameContext.Provider>
         <div className={'dashboard-container-file-display'}>
@@ -79,35 +113,39 @@ const StepContent = ({ currentStep, parsedExcelData, setParsedExcelData }) => {
       </>;
     case STEP_2_PREVIEW:
       const reader = new FileReader();
-      reader.onload = (e) => {//当文件读取完成时onload就会被触发
+      //当文件读取完成时onload就会被触发
+      reader.onload = async (e) => {
         if (e.target && e.target.result) {
           const data = new Uint8Array(e.target.result as ArrayBuffer);
           const workbook = XLSX.read(data, { type: 'array' });
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
           const jsonData = XLSX.utils.sheet_to_json(worksheet);
-          setParsedExcelData(jsonData)
+          //表头是第几行这里索引就是几，默认第一行是表头
+          const res = await checkErr(Object.keys(jsonData[0] as Object));
+
         } else {
           throw Error('数据解析时遇到错误!');
         }
       };
-      if(file) {
+      if (file) {
         reader.readAsArrayBuffer(file);
       }
 
       return <div>
-        {parsedExcelData.map((data) => {
-          let newData: string[] = [];
-          for (let dat of Object.keys(data)) {
-            newData.push(`${dat}:${data[dat]} \n`);
-          }
-          return newData;
-        })}
+        {fileName}
+        {/*{parsedExcelData.map((data) => {*/}
+        {/*  let newData: string[] = [];*/}
+        {/*  for (let dat of Object.keys(data)) {*/}
+        {/*    newData.push(`${dat}:${data[dat]} \n`);*/}
+        {/*  }*/}
+        {/*  return newData;*/}
+        {/*})}*/}
       </div>;
     case STEP_3_FINISH:
       return <div>wancheng</div>;
   }
-  return <UploadComponent callBack={setParsedExcelData} />;
+  return <UploadComponent />;
 };
 
 /*
@@ -120,8 +158,7 @@ const StepContent = ({ currentStep, parsedExcelData, setParsedExcelData }) => {
 
   需要注意:currentStep的索引是从0开始的
    */
-const ProgressComponent = ({ currentStep }: { currentStep: number }) => {
-  const [parsedExcelData, setParsedExcelData] = useState<any>([]);
+const ProgressComponent = ({ currentStep, setCurrentError }: { currentStep: number, setCurrentError }) => {
   return (
     <>
       <Steps type="basic" current={currentStep} onChange={(i) => console.log(i)}>
@@ -129,8 +166,7 @@ const ProgressComponent = ({ currentStep }: { currentStep: number }) => {
         <Steps.Step title="第二步:预览" description="预览导入的结果" />
         <Steps.Step title="第三步:完成" description="大功告成" />
       </Steps>
-      <StepContent currentStep={currentStep} parsedExcelData={parsedExcelData}
-                   setParsedExcelData={setParsedExcelData} />
+      <StepContent currentStep={currentStep} />
     </>
   )
     ;
@@ -144,10 +180,10 @@ const ProgressComponent = ({ currentStep }: { currentStep: number }) => {
 
   返回值:UploadComponent组件
   */
-const UploadComponent = ({ callBack }) => {
+const UploadComponent = () => {
   const setIsReadyForNextStep = useContext(SetIsReadyForNextStepContext);
   const setFileName = useContext(SetFileNameContext);
-  const setFile = useContext(SetFileContext)
+  const setFile = useContext(SetFileContext);
 
   /*
    此函数会在用户上传完文件后执行，作用是对文件进行解析
@@ -157,15 +193,14 @@ const UploadComponent = ({ callBack }) => {
 
    返回值:false,由于没有后端所以直接返回false防止Upload组件自动上传
     */
-  const handleBeforeUpload = (file:BeforeUploadProps):boolean => {
+  const handleBeforeUpload = (file: BeforeUploadProps): boolean => {
     const blob = file.file.fileInstance;
-    if(blob) {
-      setFile(blob)
+    if (blob) {
+      setFile(blob);
       setFileName(blob.name);
       setIsReadyForNextStep(true);
-    }
-    else{
-      ToastOnTop.error("文件已损坏");
+    } else {
+      ToastOnTop.error('文件已损坏');
     }
 
     return false;
@@ -196,6 +231,13 @@ export default hot(() => {
   useEffect(() => {
     setCurrentStep(currentStepRef.current);
   }, [currentStep]);
+
+  useEffect(() => {
+    sdk.config({
+      pluginId: 'MII_66977877C86E0004', // 此处填写插件凭证，可从开发者后台插件详情获取
+      isDebug: true, // 开启调试模式，会在控制台 log 调用参数和返回值
+    });
+  }, []);
 
   //显示弹窗
   const showDialog = () => {
@@ -237,7 +279,7 @@ export default hot(() => {
       >
         <SetIsReadyForNextStepContext.Provider value={(isReady) => setIsReadyForNextStep(isReady)}>
           <SetCurrentErrorContext.Provider value={(currentErr) => setCurrentError(currentErr)}>
-            <ProgressComponent currentStep={(currentStepRef.current)} />
+            <ProgressComponent currentStep={(currentStepRef.current)} setCurrentError={setCurrentError} />
           </SetCurrentErrorContext.Provider>
         </SetIsReadyForNextStepContext.Provider>
       </Modal>
