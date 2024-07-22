@@ -8,7 +8,7 @@ import Meta from '@douyinfe/semi-ui/lib/es/card/meta';
 import { BeforeUploadProps } from '@douyinfe/semi-ui/lib/es/upload';
 import SDK from '@lark-project/js-sdk';
 import axios from 'axios';
-import { BASE_URL, HEADERS } from '../../config.js';
+import { BASE_URL, HEADERS } from '../../constants';
 
 
 const sdk = new SDK();
