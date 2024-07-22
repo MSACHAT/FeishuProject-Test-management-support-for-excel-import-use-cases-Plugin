@@ -8,15 +8,8 @@ import Meta from '@douyinfe/semi-ui/lib/es/card/meta';
 import { BeforeUploadProps } from '@douyinfe/semi-ui/lib/es/upload';
 import SDK from '@lark-project/js-sdk';
 import axios from 'axios';
+import { BASE_URL, HEADERS } from '../../config.js';
 
-const HEADERS = {
-  headers: {
-    'X-PLUGIN-TOKEN': 'v-cb21792a-f5b1-44ce-93d1-752f431741b5',
-    'X-USER-KEY': '7391674093034127364',
-    'Content-Type': 'application/json',
-  },
-};
-const BASE_URL = 'https://project.feishu.cn';
 
 const sdk = new SDK();
 
@@ -74,7 +67,7 @@ const StepContent = ({ currentStep }) => {
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
           const jsonData = XLSX.utils.sheet_to_json(worksheet);
-          setResolvedExcelData(jsonData)
+          setResolvedExcelData(jsonData);
           const headline = Object.keys(jsonData[0] as object);
           const context = await sdk.Context.load();
           const projectKey = context.mainSpace?.id;
@@ -112,7 +105,7 @@ const StepContent = ({ currentStep }) => {
       checkErr().then(res => {
         if (res.hasError) {
           setIsReadyForNextStep(false);
-          if(errors.length===0) {
+          if (errors.length === 0) {
             setErrors([`表头有问题: ${res.errFields.join(', ')}`]);
           }
           setCurrentError('此表格数据有问题');
@@ -127,10 +120,10 @@ const StepContent = ({ currentStep }) => {
   }, [currentStep, file, setIsReadyForNextStep, setCurrentError]);
 
   useEffect(() => {
-    if(resolvedExcelData.length !== 0) {
+    if (resolvedExcelData.length !== 0) {
       setColumns(Object.keys(resolvedExcelData[0] as Object).map(header => ({
         title: header,
-        dataIndex: header
+        dataIndex: header,
       })));
     }
   }, [resolvedExcelData]);
@@ -166,9 +159,9 @@ const StepContent = ({ currentStep }) => {
         </>
       )}
       {currentStep === STEP_2_PREVIEW && (
-        <div className={"current-step-container"}>
+        <div className={'current-step-container'}>
           {errors.map((err, index) => <h3 key={index}>{err}</h3>)}
-          <Table columns={columns} dataSource={resolvedExcelData} pagination={{ pageSize:5 }}/>
+          <Table columns={columns} dataSource={resolvedExcelData} pagination={{ pageSize: 5 }} />
         </div>
       )}
       {currentStep === STEP_3_FINISH && <div>完成</div>}
