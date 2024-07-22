@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { PLUGIN_ID, PULGIN_SECRET } from './constants';
+import { PLUGIN_ID, PLUGIN_SECRET } from './constants';
 import { sdkManager } from './utils';
 
 const sdk = sdkManager.sdk;
@@ -17,7 +17,7 @@ export async function isLogin() {
 // Identity authentication
 export async function authorize(code: string) {
   try {
-    const pluginToken = await fetchPluginToken(PLUGIN_ID, PULGIN_SECRET);
+    const pluginToken = await fetchPluginToken(PLUGIN_ID, PLUGIN_SECRET);
 
     await sdk.storage.setItem('user_jwt', pluginToken);
 
