@@ -6,11 +6,11 @@ const sdk = sdkManager.sdk;
 // Get the login status of the plug-in
 // If return false, will call the function `authorize` with a code
 export async function isLogin() {
-  // const JWT = await sdk.storage.getItem('user_jwt');
+  const JWT = await sdk.storage.getItem('user_jwt');
 
-  // if (await validateJWT(JWT)) {
-  //   return true;
-  // }
+  if (await validateJWT(JWT)) {
+    return true;
+  }
   return false;
 }
 
