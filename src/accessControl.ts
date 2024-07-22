@@ -18,8 +18,9 @@ export async function isLogin() {
 export async function authorize(code: string) {
   try {
     const pluginToken = await fetchPluginToken(PLUGIN_ID, PULGIN_SECRET);
-    const userToken = await fetchUserPluginToken(pluginToken, code);
-    await sdk.storage.setItem('user_jwt', userToken);
+
+    await sdk.storage.setItem('user_jwt', pluginToken);
+
     return true;
   } catch (error) {
     return false;
@@ -58,7 +59,7 @@ async function validateJWT(JWT: string | undefined) {
 async function fetchPluginToken(
   pluginId: string,
   pluginSecret: string,
-  type: number = 0,
+  type: number = 1,
 ): Promise<string> {
   /*
   获取plugin token
@@ -84,7 +85,7 @@ async function fetchPluginToken(
   try {
     const response = await axios.post(url, data, { headers });
 
-    return response.data.token;
+    return response.data.data.token;
   } catch (error) {
     console.error(
       'Error fetching plugin token:',
@@ -122,7 +123,7 @@ async function fetchUserPluginToken(
   try {
     const response = await axios.post(url, data, { headers });
 
-    return response.data.token;
+    return response.data.data.token;
   } catch (error) {
     console.error(
       'Error fetching user plugin token:',
