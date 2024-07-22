@@ -1,4 +1,4 @@
-import {HEADERS,BASE_URL} from './config';
+import {HEADERS,BASE_URL} from './constants';
 import SDK from '@lark-project/js-sdk';
 import axios from 'axios';
 import { PLUGIN_ID, PLUGIN_SECRET } from './constants';
@@ -86,7 +86,9 @@ async function fetchPluginToken(
 
   const url = 'https://project.feishu.cn/open_api/authen/plugin_token';
   const headers = {
-    'Content-Type': 'application/json',
+    headers: {
+      'Content-Type': 'application/json',
+    }
   };
   const data = {
     plugin_id: pluginId,
@@ -95,7 +97,7 @@ async function fetchPluginToken(
   };
 
   try {
-    const response = await axios.post(url, data, { headers });
+    const response = await axios.post(url, data, headers);
 
     return response.data.data.token;
   } catch (error) {
