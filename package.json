@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "dependencies": {
     "@douyinfe/semi-ui": "2.25.4",
-    "@lark-project/js-sdk": "^0.1.6",
+    "@lark-project/js-sdk": "^2.0.1-alpha.7",
     "axios": "^0.21.1",
     "react": "^17.0.0",
     "react-dom": "^17.0.0",

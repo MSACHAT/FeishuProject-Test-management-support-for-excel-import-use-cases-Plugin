@@ -13,11 +13,15 @@ axios.interceptors.request.use(
 );
 axios.interceptors.response.use(
   function (response) {
+    localStorage.setItem('IsUserTokenAvailable', 'true');
     response.data.statusCode = response.data?.status_code;
     delete response.data?.status_code;
     return response;
   },
   function (error) {
+    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+      localStorage.setItem('IsUserTokenAvailable', 'false');
+    }
     return Promise.reject(error);
   },
 );
