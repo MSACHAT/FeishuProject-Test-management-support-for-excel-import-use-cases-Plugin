@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { sdkManager } from '../utils';
 
 interface ResWrapper<T = {}> {
   message: string;
@@ -13,11 +14,15 @@ axios.interceptors.request.use(
 );
 axios.interceptors.response.use(
   function (response) {
+    sdkManager.sdk.storage.setItem('IsUserTokenAvailable', 'true');
     response.data.statusCode = response.data?.status_code;
     delete response.data?.status_code;
     return response;
   },
   function (error) {
+    if (error.response && error.response.status === 401) {
+      sdkManager.sdk.storage.setItem('IsUserTokenAvailable', 'false');
+    }
     return Promise.reject(error);
   },
 );

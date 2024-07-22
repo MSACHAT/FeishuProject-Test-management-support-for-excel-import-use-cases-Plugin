@@ -1,24 +1,21 @@
-import { SDKClient } from '@lark-project/js-sdk';
 import axios from 'axios';
 import { PLUGIN_ID, PULGIN_SECRET } from './constants';
+import { sdkManager } from './utils';
 
-const sdk = new SDKClient();
+const sdk = sdkManager.sdk;
 // Get the login status of the plug-in
 // If return false, will call the function `authorize` with a code
 export async function isLogin() {
-  await sdk.config({
-    pluginId: PLUGIN_ID,
-    isDebug: true,
-  });
   const JWT = await sdk.storage.getItem('user_jwt');
 
-  if (validateJWT(JWT)) {
-    true;
+  if (await validateJWT(JWT)) {
+    return true;
   }
+  return false;
 }
 
 // Identity authentication
-export async function authorize(code) {
+export async function authorize(code: string) {
   try {
     const pluginToken = await fetchPluginToken(PLUGIN_ID, PULGIN_SECRET);
     const userToken = await fetchUserPluginToken(pluginToken, code);
@@ -49,16 +46,20 @@ export function getIntergrationPointConfig(type, key = '') {
   return configs[type] ? configs[type][key] : {};
 }
 
-function validateJWT(JWT: string | undefined) {
-  if (JWT) {
-    // Perform JWT validation logic here
-    return true; // Return true if JWT is valid
+async function validateJWT(JWT: string | undefined) {
+  const isUserTokenAvailable = await sdk.storage.getItem('IsUserTokenAvailable');
+  if (isUserTokenAvailable === 'true') {
+    return true;
   } else {
-    return false; // Return false if JWT is undefined or empty
+    return false;
   }
 }
 
-async function fetchPluginToken(pluginId, pluginSecret, type = 0) {
+async function fetchPluginToken(
+  pluginId: string,
+  pluginSecret: string,
+  type: number = 0,
+): Promise<string> {
   /*
   获取plugin token
 
@@ -83,7 +84,7 @@ async function fetchPluginToken(pluginId, pluginSecret, type = 0) {
   try {
     const response = await axios.post(url, data, { headers });
 
-    response.data.token;
+    return response.data.token;
   } catch (error) {
     console.error(
       'Error fetching plugin token:',
@@ -93,7 +94,11 @@ async function fetchPluginToken(pluginId, pluginSecret, type = 0) {
   }
 }
 
-async function fetchUserPluginToken(pluginAccessToken, code, grantType = 'authorization_code') {
+async function fetchUserPluginToken(
+  pluginAccessToken: string,
+  code: string,
+  grantType = 'authorization_code',
+) {
   /**
    * 获取User Plugin Token
    *
