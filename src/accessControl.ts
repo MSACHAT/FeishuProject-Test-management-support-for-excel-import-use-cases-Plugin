@@ -1,14 +1,12 @@
 import axios from 'axios';
 import { PLUGIN_ID, PLUGIN_SECRET } from './constants';
-import { sdkManager } from './utils';
 
-const sdk = sdkManager.sdk;
+localStorage.setItem('IsUserTokenAvailable', 'false');
+
 // Get the login status of the plug-in
 // If return false, will call the function `authorize` with a code
 export async function isLogin() {
-  const JWT = await sdk.storage.getItem('user_jwt');
-
-  if (await validateJWT(JWT)) {
+  if (await validateJWT()) {
     return true;
   }
   return false;
@@ -19,7 +17,7 @@ export async function authorize(code: string) {
   try {
     const pluginToken = await fetchPluginToken(PLUGIN_ID, PLUGIN_SECRET);
 
-    await sdk.storage.setItem('user_jwt', pluginToken);
+    localStorage.setItem('user_jwt', pluginToken);
 
     return true;
   } catch (error) {
@@ -47,8 +45,8 @@ export function getIntergrationPointConfig(type, key = '') {
   return configs[type] ? configs[type][key] : {};
 }
 
-async function validateJWT(JWT: string | undefined) {
-  const isUserTokenAvailable = await sdk.storage.getItem('IsUserTokenAvailable');
+async function validateJWT(JWT?: string | undefined) {
+  const isUserTokenAvailable = localStorage.getItem('IsUserTokenAvailable');
   if (isUserTokenAvailable === 'true') {
     return true;
   } else {
