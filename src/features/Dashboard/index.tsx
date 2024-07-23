@@ -39,14 +39,14 @@ const ToastOnTop = ToastFactory.create({
    返回值:progress组件
     */
 const StepContent = ({ currentStep }) => {
-  const [resolvedExcelData, setResolvedExcelData] = useState<any>([]);
+  const [resolvedExcelData, setResolvedExcelData] = useState<Object[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
   const setIsReadyForNextStep = useContext(SetIsReadyForNextStepContext);
   const setCurrentError = useContext(SetCurrentErrorContext);
   const [fileName, setFileNameState] = useState<string>('');
   const [file, setFileState] = useState<File>();
-  const [columns, setColumns] = useState<any>([]);
-  const [fields,setFields]=useState<any[]>([])
+  const [columns, setColumns] = useState<Object[]>([]);
+  const [fields,setFields]=useState<Object[]>([])
 
   /*
   此处封装了用于检查表格是否存在错误的函数
@@ -67,14 +67,13 @@ const StepContent = ({ currentStep }) => {
           const workbook = XLSX.read(data, { type: 'array' });
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
-          const jsonData = XLSX.utils.sheet_to_json(worksheet);
+          const jsonData:Object[] = XLSX.utils.sheet_to_json(worksheet);
           setResolvedExcelData(jsonData);
           const headline = Object.keys(jsonData[0] as object);
           const context = await sdk.Context.load();
           const projectKey = context.mainSpace?.id;
           const workItemTypeKey = context.activeWorkItem?.workObjectId;
           const fields = await axios.get(`${BASE_URL}/open_api/${projectKey}/work_item/${workItemTypeKey}/meta`,  HEADERS);
-          console.log(fields)
           setFields(fields.data.data);
           const fieldNames = fields.data.data.map((field: { field_name: string; }) => field.field_name);
           let errorFields: string[] = [];
@@ -268,6 +267,7 @@ export default hot(() => {
     setCurrentStep(0);
     currentStepRef.current = 0;
     setVisible(true);
+    setCurrentError("未上传文件!")
   };
 
   const handleOk = () => {

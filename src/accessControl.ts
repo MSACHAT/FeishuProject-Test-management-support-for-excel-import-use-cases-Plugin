@@ -68,7 +68,7 @@ async function validateJWT(JWT?: string | undefined) {
 async function fetchPluginToken(
   pluginId: string,
   pluginSecret: string,
-  type: number = 1,
+  type: number = 0,
 ): Promise<string> {
   /*
   获取plugin token
@@ -93,7 +93,6 @@ async function fetchPluginToken(
 
   try {
     const response = await axios.post(url, data, { headers:headers });
-
     return response.data.data.token;
   } catch (error) {
     console.error(
