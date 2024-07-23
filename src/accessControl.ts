@@ -21,7 +21,6 @@ sdk.config({
 export async function authorize(code: string) {
   try {
     const pluginToken = await fetchPluginToken(PLUGIN_ID, PLUGIN_SECRET);
-
     localStorage.setItem('user_jwt', pluginToken);
 
     return true;
