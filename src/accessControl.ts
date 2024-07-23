@@ -35,11 +35,9 @@ export const visibilityControl = async (type, key) => {
   const projectKey=context.mainSpace?.id
   const works=await axios.get(`${BASE_URL}/open_api/${projectKey}/work_item/all-types`,HEADERS)
   //测试用例工作项的typeKey
-  const workTypeKeyOfTest=works.data.data.filter((work: { api_name: string; })=>work.api_name==="test")[0].type_key
+  const workTypeKeyOfTest=works.data.data.filter((work: { api_name: string; })=>work.api_name==="test_cases")[0].type_key
   //用户当前所在工作项目的typeKey
   const currentWorkTypeKey=context.activeWorkItem?.workObjectId
-  console.log(workTypeKeyOfTest)
-  console.log(currentWorkTypeKey)
   return new Promise((resolve, reject) => {
     if (type === 'DASHBOARD' && workTypeKeyOfTest===currentWorkTypeKey) {
       resolve(true);
@@ -86,10 +84,8 @@ async function fetchPluginToken(
 
   const url = 'https://project.feishu.cn/open_api/authen/plugin_token';
   const headers = {
-    headers: {
       'Content-Type': 'application/json',
     }
-  };
   const data = {
     plugin_id: pluginId,
     plugin_secret: pluginSecret,
@@ -97,7 +93,7 @@ async function fetchPluginToken(
   };
 
   try {
-    const response = await axios.post(url, data, headers);
+    const response = await axios.post(url, data, { headers:headers });
 
     return response.data.data.token;
   } catch (error) {

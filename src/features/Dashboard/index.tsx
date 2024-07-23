@@ -2,7 +2,7 @@ import { hot } from 'react-hot-loader/root';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { Upload, Button, Modal, Steps, ToastFactory, Card, Avatar, Table } from '@douyinfe/semi-ui';
 import './index.less';
-import { IconFile, IconHelpCircle } from '@douyinfe/semi-icons';
+import { IconFile, IconHelpCircle,IconClear } from '@douyinfe/semi-icons';
 import * as XLSX from 'xlsx';
 import Meta from '@douyinfe/semi-ui/lib/es/card/meta';
 import { BeforeUploadProps } from '@douyinfe/semi-ui/lib/es/upload';
@@ -46,6 +46,7 @@ const StepContent = ({ currentStep }) => {
   const [fileName, setFileNameState] = useState<string>('');
   const [file, setFileState] = useState<File>();
   const [columns, setColumns] = useState<any>([]);
+  const [fields,setFields]=useState<any[]>([])
 
   /*
   此处封装了用于检查表格是否存在错误的函数
@@ -72,10 +73,9 @@ const StepContent = ({ currentStep }) => {
           const context = await sdk.Context.load();
           const projectKey = context.mainSpace?.id;
           const workItemTypeKey = context.activeWorkItem?.workObjectId;
-          const fields = await axios.post(`${BASE_URL}/open_api/${projectKey}/field/all`, {
-            work_item_type_key: workItemTypeKey,
-          }, HEADERS);
-
+          const fields = await axios.get(`${BASE_URL}/open_api/${projectKey}/work_item/${workItemTypeKey}/meta`,  HEADERS);
+          console.log(fields)
+          setFields(fields.data.data);
           const fieldNames = fields.data.data.map((field: { field_name: string; }) => field.field_name);
           let errorFields: string[] = [];
           headline.forEach((field) => {
@@ -160,7 +160,7 @@ const StepContent = ({ currentStep }) => {
       )}
       {currentStep === STEP_2_PREVIEW && (
         <div className={'current-step-container'}>
-          {errors.map((err, index) => <h3 key={index}>{err}</h3>)}
+          {errors.map((err, index) =><div style={{display:'flex',alignItems:"center"}}><IconClear style={{color:"red"}}/><strong>{err}</strong></div>)}
           <Table columns={columns} dataSource={resolvedExcelData} pagination={{ pageSize: 5 }} />
         </div>
       )}
@@ -181,14 +181,14 @@ const StepContent = ({ currentStep }) => {
    */
 const ProgressComponent = ({ currentStep, setCurrentError }: { currentStep: number, setCurrentError }) => {
   return (
-    <>
-      <Steps type="basic" current={currentStep} onChange={(i) => console.log(i)}>
+    <div className={"step-indicator"}>
+      <Steps type="basic" current={currentStep} onChange={(i) => console.log(i)} className={"steps"}>
         <Steps.Step title="第一步:导入" description="导入xlsx. csv. 格式的文件" />
         <Steps.Step title="第二步:预览" description="预览导入的结果" />
         <Steps.Step title="第三步:完成" description="大功告成" />
       </Steps>
       <StepContent currentStep={currentStep} />
-    </>
+    </div>
   )
     ;
 };
@@ -228,7 +228,7 @@ const UploadComponent = () => {
   };
 
   return (
-    <>
+    <div className={"upload-button"}>
       <Upload
         draggable={true}
         dragMainText={'点击上传文件或拖拽文件到这里'}
@@ -238,7 +238,7 @@ const UploadComponent = () => {
         beforeUpload={handleBeforeUpload}
       >
       </Upload>
-    </>
+    </div>
   );
 };
 

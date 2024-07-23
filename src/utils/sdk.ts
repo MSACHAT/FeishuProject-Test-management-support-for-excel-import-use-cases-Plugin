@@ -26,5 +26,5 @@ class SDKManager {
 
 export const sdkManager = new SDKManager({
   pluginId: PLUGIN_ID,
-  isDebug: false,
+  isDebug: true,
 });
