@@ -3,6 +3,7 @@ import SDK from '@lark-project/js-sdk';
 import axios from 'axios';
 import { PLUGIN_ID, PLUGIN_SECRET } from './constants';
 
+
 // Get the login status of the plug-in
 // If return false, will call the function `authorize` with a code
 export async function isLogin() {
@@ -40,6 +41,17 @@ export const visibilityControl = async (type, key) => {
   //用户当前所在工作项目的typeKey
   const currentWorkTypeKey = context.activeWorkItem?.workObjectId;
   return new Promise((resolve, reject) => {
+    if (type === 'DASHBOARD' && workTypeKeyOfTest === currentWorkTypeKey) {
+  return new Promise(async (resolve, reject) => {
+    const context = await sdk.Context.load();
+    const projectKey = context.mainSpace?.id
+    const works = await axios.get(`${BASE_URL}/open_api/${projectKey}/work_item/all-types`, HEADERS)
+    //测试用例工作项的typeKey
+    const workTypeKeyOfTest = works.data.data.filter((work: {
+      api_name: string;
+    }) => work.api_name === "test_cases")[0].type_key
+    //用户当前所在工作项目的typeKey
+    const currentWorkTypeKey = context.activeWorkItem?.workObjectId
     if (type === 'DASHBOARD' && workTypeKeyOfTest === currentWorkTypeKey) {
       resolve(true);
     } else {

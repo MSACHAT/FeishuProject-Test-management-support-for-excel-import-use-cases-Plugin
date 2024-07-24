@@ -6,7 +6,6 @@ import Config from './features/Config';
 import Controls from './features/Controls';
 import Dashboard from './features/Dashboard';
 import View from './features/View';
-
 export * from './accessControl';
 
 const renderBoard = () => <Board />;

@@ -8,6 +8,7 @@ import Meta from '@douyinfe/semi-ui/lib/es/card/meta';
 import { BeforeUploadProps } from '@douyinfe/semi-ui/lib/es/upload';
 import SDK from '@lark-project/js-sdk';
 import axios from 'axios';
+import "../../middlewares/axiosRetry"
 import { BASE_URL, HEADERS } from '../../constants';
 
 const sdk = new SDK();
@@ -33,7 +34,7 @@ const ToastOnTop = ToastFactory.create({
 
    返回值:progress组件
     */
-const StepContent = ({ currentStep }) => {
+const StepContent = ({ currentStep,setHasError }) => {
   const [resolvedExcelData, setResolvedExcelData] = useState<Object[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
   const setIsReadyForNextStep = useContext(SetIsReadyForNextStepContext);
@@ -117,6 +118,21 @@ const StepContent = ({ currentStep }) => {
           setIsReadyForNextStep(false);
           setCurrentError(err);
         });
+      checkErr().then(res => {
+        if (res.hasError) {
+          setHasError(true)
+          setIsReadyForNextStep(false);
+          if (errors.length === 0) {
+            setErrors([`表头有问题: ${res.errFields.join(', ')}`]);
+          }
+          setCurrentError('此表格数据有问题');
+        } else {
+          setIsReadyForNextStep(true);
+        }
+      }).catch(err => {
+        setIsReadyForNextStep(false);
+        setCurrentError(err);
+      });
     }
   }, [currentStep, file, setIsReadyForNextStep, setCurrentError]);
 
@@ -194,14 +210,78 @@ const ProgressComponent = ({
   currentStep: number;
   setCurrentError;
 }) => {
+const ProgressComponent = ({ currentStep, setCurrentError }: { currentStep: number, setCurrentError }) => {
+  const [hasError, setHasError] = useState<boolean>(false);
+  /*
+ 此函数用于返回弹窗顶部步骤栏中每一步骤的状态，也就是每一步的气泡的样式
+
+ 参数:
+   1.step:此参数表示具体是哪一步在调用这个函数
+
+ 返回值：
+   1."process":表示当前步骤的状态是"正在进行"
+   2."finish":表示当前步骤的状态是"已经完成"
+   3."error":表示当前步骤的状态是"遇到错误"
+   4."wait":表示当前步骤的状态是"还未进行到此步"
+  */
+  const getStatus=(step:number)=>{
+    if(currentStep === step){
+      if(hasError){
+        return 'error';
+      }
+      else{
+        return "process"
+      }
+    }
+    else if(currentStep > step){
+      return "finish"
+    }
+    else{
+      return "wait"
+    }
+    // switch(step){
+    //   case STEP_1_UPLOAD:
+    //     if(currentStep === STEP_1_UPLOAD){
+    //       return "process"
+    //     }
+    //     else{
+    //       return "finish"
+    //     }
+    //   case STEP_2_PREVIEW:
+    //     if(currentStep === STEP_2_PREVIEW){
+    //       if(hasError){
+    //         return "error"
+    //       }
+    //       else{
+    //         return "process"
+    //       }
+    //     }
+    //     else if(currentStep > STEP_2_PREVIEW){
+    //       return "finish"
+    //     }
+    //     else{
+    //       return "wait"
+    //     }
+    //   case STEP_3_FINISH:
+    //     if(currentStep === STEP_3_FINISH){
+    //       return "finish"
+    //     }
+    // }
+    // return "finish"
+  }
   return (
     <div className={'step-indicator'}>
       <Steps type="basic" current={currentStep} onChange={i => console.log(i)} className={'steps'}>
         <Steps.Step title="第一步:导入" description="导入xlsx. csv. 格式的文件" />
         <Steps.Step title="第二步:预览" description="预览导入的结果" />
         <Steps.Step title="第三步:完成" description="大功告成" />
+    <div className={"step-indicator"}>
+      <Steps type="basic" current={currentStep} onChange={(i) => console.log(i)} className={"steps"}>
+        <Steps.Step title="第一步:导入" status={getStatus(STEP_1_UPLOAD)} description="导入xlsx. csv. 格式的文件" />
+        <Steps.Step title="第二步:预览" status={getStatus(STEP_2_PREVIEW)} description="预览导入的结果" />
+        <Steps.Step title="第三步:完成" status={getStatus(STEP_3_FINISH)} description="大功告成" />
       </Steps>
-      <StepContent currentStep={currentStep} />
+      <StepContent currentStep={currentStep} setHasError={setHasError} />
     </div>
   );
 };
@@ -233,7 +313,7 @@ const UploadComponent = () => {
       setFile(blob);
       setFileName(blob.name);
       setIsReadyForNextStep(true);
-      ToastOnTop.success('上传成功');
+      ToastOnTop.success('上传成功')
     } else {
       ToastOnTop.error('文件已损坏');
     }
@@ -305,7 +385,7 @@ export default hot(() => {
     <div className="dashboard-container" id="dashboard-container">
       <Button onClick={showDialog}>打开弹窗</Button>
       <Modal
-        title="基本对话框"
+        className={"pop-up"}
         visible={visible}
         onOk={handleOk}
         onCancel={handleCancel}
