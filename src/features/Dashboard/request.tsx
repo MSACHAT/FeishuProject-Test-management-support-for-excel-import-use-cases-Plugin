@@ -2,9 +2,9 @@ import './index.less';
 import SDK from '@lark-project/js-sdk';
 import axios from 'axios';
 import { BASE_URL, HEADERS } from '../../constants';
-import { useEffect } from 'react';
 
 
+// SDK 配置函数，用于初始化 SDK 配置
   const sdk = new SDK();
 
 
@@ -20,8 +20,6 @@ import { useEffect } from 'react';
       }
     }, 0);
 
-
-  //********************************************************************************************************************************** */
 interface TestCase {
     [key: string]: any;
 }
@@ -52,7 +50,7 @@ interface Field {
     options?: FieldOption[]; // 某些字段可能有选项
 }
 
-interface DataFields {
+export interface DataFields {
     err: {};
     err_code: number;
     err_msg: string;
@@ -67,18 +65,22 @@ interface FieldValuePair {
 interface TestCaseData {
     field_value_pairs: FieldValuePair[];
 }
+
+/*
+ * 发送测试用例数据请求函数
+ * 参数: testCaseDataList - 测试用例数据数组
+ * 返回值: { hasError: boolean, errFields: string[] }
+ */
 const request = async (testCaseDataList: TestCaseData[]): Promise<{ hasError: boolean, errFields: string[] }> => {
     try {
         console.log("testCaseDataList")
         console.log(testCaseDataList)
-
-        const projectKey = 'jerrysspace'
+        const context = await sdk.Context.load();
+        const projectKey = context.mainSpace?.id;
         if (!projectKey) {
             console.log("项目密钥未找到")
             throw new Error('项目密钥未找到');
         }
-        console.log("projectKey")
-        console.log(projectKey)
 
         const errFields: string[] = [];
         for (const testCaseData of testCaseDataList) {
@@ -104,7 +106,11 @@ const request = async (testCaseDataList: TestCaseData[]): Promise<{ hasError: bo
     }
 };
 
-
+/*
+ * 创建字段映射函数
+ * 参数: data - 字段数组
+ * 返回值: { [key: string]: string }
+ */
 const createFieldMap = (data: Field[]): { [key: string]: string } => {
     return data.reduce((map, field) => {
         map[field.field_name] = field.field_key; // 将 field_key 作为键，field_name 作为值
@@ -112,30 +118,30 @@ const createFieldMap = (data: Field[]): { [key: string]: string } => {
     }, {});
 };
 
-export function mergeTestCases(testCases: TestCase[], dataFields: DataFields): TestCaseData[] {
-    const fieldMap = createFieldMap(dataFields.data);
+/*
+ * 合并测试用例函数
+ * 参数: testCases - 测试用例数组
+ *        fields - 字段数组
+ * 返回值: TestCaseData[] - 合并后的测试用例数据数组
+ */
+export function mergeTestCases(testCases: TestCase[], fields: Field[]): TestCaseData[] {
+    const fieldMap = createFieldMap(fields);
+    // console.log(fieldMap);
     let result: TestCaseData[] = [];
 
     testCases.forEach(testCase => {
         const fieldValuePairs: FieldValuePair[] = Object.entries(testCase)
+            .filter(([key]) => fieldMap[key]) // 仅保留在 fieldMap 中有对应 field_key 的项
             .map(([key, value]) => {
-                // 将 field_name 转换为 field_key
-                const fieldKey = fieldMap[key] || key;
+                const fieldKey = fieldMap[key];
                 return { field_key: fieldKey, field_value: value };
             });
         result.push({ field_value_pairs: fieldValuePairs });
     });
-    //在这之后将代码合并
-    request(result)
+
+    request(result);
     return result;
 }
 
-interface Template {
-    work_item_type_key: string;
-    template_id: number;
-    name: string;
-    field_value_pairs: Array<{
-        field_key: string;
-        field_value: any; // 字段值可以是不同的类型，因此使用 any
-    }>;
-}
+
+export default mergeTestCases;

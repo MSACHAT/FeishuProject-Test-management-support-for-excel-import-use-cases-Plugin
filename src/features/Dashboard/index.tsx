@@ -9,6 +9,7 @@ import { BeforeUploadProps } from '@douyinfe/semi-ui/lib/es/upload';
 import SDK from '@lark-project/js-sdk';
 import axios from 'axios';
 import { BASE_URL, HEADERS } from '../../constants';
+import { mergeTestCases } from './request';
 
 
 const sdk = new SDK();
@@ -46,7 +47,7 @@ const StepContent = ({ currentStep }) => {
   const [fileName, setFileNameState] = useState<string>('');
   const [file, setFileState] = useState<File>();
   const [columns, setColumns] = useState<Object[]>([]);
-  const [fields,setFields]=useState<Object[]>([])
+  const [fields,setFields]=useState<any>([])
 
   /*
   此处封装了用于检查表格是否存在错误的函数
@@ -73,10 +74,11 @@ const StepContent = ({ currentStep }) => {
           const context = await sdk.Context.load();
           const projectKey = context.mainSpace?.id;
           const workItemTypeKey = context.activeWorkItem?.workObjectId;
-          const fields = await axios.get(`${BASE_URL}/open_api/${projectKey}/work_item/${workItemTypeKey}/meta`,  HEADERS);
+          const fields = await axios.post(`${BASE_URL}/open_api/${projectKey}/field/all`,{work_item_type_key:workItemTypeKey},HEADERS);
           setFields(fields.data.data);
           const fieldNames = fields.data.data.map((field: { field_name: string; }) => field.field_name);
           let errorFields: string[] = [];
+          
           headline.forEach((field) => {
             if (fieldNames.indexOf(field) === -1) {
               errorFields.push(field);
@@ -115,6 +117,9 @@ const StepContent = ({ currentStep }) => {
         setIsReadyForNextStep(false);
         setCurrentError(err);
       });
+    }
+    if(currentStep===STEP_3_FINISH){
+        mergeTestCases(resolvedExcelData,fields)
     }
   }, [currentStep, file, setIsReadyForNextStep, setCurrentError]);
 
@@ -219,6 +224,7 @@ const UploadComponent = () => {
       setFile(blob);
       setFileName(blob.name);
       setIsReadyForNextStep(true);
+      ToastOnTop.success("上传成功")
     } else {
       ToastOnTop.error('文件已损坏');
     }
@@ -275,8 +281,17 @@ export default hot(() => {
       ToastOnTop.error(currentError);
       return;
     }
+    if(currentStep===STEP_3_FINISH){
+        setVisible(false)
+    }
+    else if(currentStep===STEP_2_PREVIEW){
+        setIsReadyForNextStep(true);
+        ToastOnTop.success("导入完成")
+    }
+    else{
+        setIsReadyForNextStep(false)
+    }
     setCurrentStep(currentStep + 1);
-    setIsReadyForNextStep(false);
     currentStepRef.current += 1;
     console.log('Ok button clicked');
   };
@@ -289,6 +304,7 @@ export default hot(() => {
 
   return (
     <div className="dashboard-container" id="dashboard-container">
+
       <Button onClick={showDialog}>打开弹窗</Button>
       <Modal
         title="基本对话框"
