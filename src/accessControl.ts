@@ -1,8 +1,8 @@
-import {HEADERS,BASE_URL} from './constants';
+import { HEADERS, BASE_URL } from './constants';
 import SDK from '@lark-project/js-sdk';
 import axios from 'axios';
 import { PLUGIN_ID, PLUGIN_SECRET } from './constants';
-localStorage.setItem('IsUserTokenAvailable', 'false');
+
 // Get the login status of the plug-in
 // If return false, will call the function `authorize` with a code
 export async function isLogin() {
@@ -30,15 +30,17 @@ export async function authorize(code: string) {
 }
 
 export const visibilityControl = async (type, key) => {
-  const context=await sdk.Context.load();
-  const projectKey=context.mainSpace?.id
-  const works=await axios.get(`${BASE_URL}/open_api/${projectKey}/work_item/all-types`,HEADERS)
+  const context = await sdk.Context.load();
+  const projectKey = context.mainSpace?.id;
+  const works = await axios.get(`${BASE_URL}/open_api/${projectKey}/work_item/all-types`, HEADERS);
   //测试用例工作项的typeKey
-  const workTypeKeyOfTest=works.data.data.filter((work: { api_name: string; })=>work.api_name==="test_cases")[0].type_key
+  const workTypeKeyOfTest = works.data.data.filter(
+    (work: { api_name: string }) => work.api_name === 'test_cases',
+  )[0].type_key;
   //用户当前所在工作项目的typeKey
-  const currentWorkTypeKey=context.activeWorkItem?.workObjectId
+  const currentWorkTypeKey = context.activeWorkItem?.workObjectId;
   return new Promise((resolve, reject) => {
-    if (type === 'DASHBOARD' && workTypeKeyOfTest===currentWorkTypeKey) {
+    if (type === 'DASHBOARD' && workTypeKeyOfTest === currentWorkTypeKey) {
       resolve(true);
     } else {
       resolve(false);
@@ -72,7 +74,7 @@ async function fetchPluginToken(
 ): Promise<string> {
   /*
   获取plugin token
-
+  
   Args:
     pluginId(String): 插件id
     pluginSecret(String): 插件密码
@@ -83,8 +85,8 @@ async function fetchPluginToken(
 
   const url = 'https://project.feishu.cn/open_api/authen/plugin_token';
   const headers = {
-      'Content-Type': 'application/json',
-    }
+    'Content-Type': 'application/json',
+  };
   const data = {
     plugin_id: pluginId,
     plugin_secret: pluginSecret,
@@ -92,7 +94,7 @@ async function fetchPluginToken(
   };
 
   try {
-    const response = await axios.post(url, data, { headers:headers });
+    const response = await axios.post(url, data, { headers: headers });
     return response.data.data.token;
   } catch (error) {
     console.error(
@@ -129,7 +131,7 @@ async function fetchUserPluginToken(
   };
 
   try {
-    const response = await axios.post(url, data, { headers });
+    const response = await axios.post(url, data, { headers: headers });
 
     return response.data.data.token;
   } catch (error) {
