@@ -21,7 +21,7 @@ const useModel = () => {
         setVisible(false);
       })
       .catch(errors => {
-        console.log(errors);
+        throw errors;
       });
   };
   const handleCancel = () => {

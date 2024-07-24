@@ -14,9 +14,8 @@ import { BASE_URL, HEADERS } from '../../constants';
           pluginId: 'MII_66977877C86E0004',
           isDebug: true,
         });
-        console.log('SDK 配置成功');
       } catch (e) {
-        console.error('SDK 配置失败:', e);
+       throw e
       }
     }, 0);
 
@@ -73,19 +72,14 @@ interface TestCaseData {
  */
 const request = async (testCaseDataList: TestCaseData[]): Promise<{ hasError: boolean, errFields: string[] }> => {
     try {
-        console.log("testCaseDataList")
-        console.log(testCaseDataList)
         const context = await sdk.Context.load();
         const projectKey = context.mainSpace?.id;
         if (!projectKey) {
-            console.log("项目密钥未找到")
             throw new Error('项目密钥未找到');
         }
 
         const errFields: string[] = [];
         for (const testCaseData of testCaseDataList) {
-            console.log("testCaseData.field_value_pairs")
-            console.log(testCaseData.field_value_pairs)
             const response = await axios.post(
                 `${BASE_URL}/open_api/${projectKey}/work_item/create`,
                 {
@@ -101,7 +95,6 @@ const request = async (testCaseDataList: TestCaseData[]): Promise<{ hasError: bo
         }
         return { hasError: errFields.length > 0, errFields };
     } catch (error) {
-        console.error('请求失败:', error);
         return { hasError: true, errFields: ['请求失败'] };
     }
 };
@@ -126,7 +119,6 @@ const createFieldMap = (data: Field[]): { [key: string]: string } => {
  */
 export function mergeTestCases(testCases: TestCase[], fields: Field[]): TestCaseData[] {
     const fieldMap = createFieldMap(fields);
-    // console.log(fieldMap);
     let result: TestCaseData[] = [];
 
     testCases.forEach(testCase => {

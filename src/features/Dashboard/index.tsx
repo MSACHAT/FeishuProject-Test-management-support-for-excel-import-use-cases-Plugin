@@ -186,7 +186,7 @@ const StepContent = ({ currentStep }) => {
 const ProgressComponent = ({ currentStep, setCurrentError }: { currentStep: number, setCurrentError }) => {
   return (
     <div className={"step-indicator"}>
-      <Steps type="basic" current={currentStep} onChange={(i) => console.log(i)} className={"steps"}>
+      <Steps type="basic" current={currentStep} className={"steps"}>
         <Steps.Step title="第一步:导入" description="导入xlsx. csv. 格式的文件" />
         <Steps.Step title="第二步:预览" description="预览导入的结果" />
         <Steps.Step title="第三步:完成" description="大功告成" />
@@ -293,13 +293,11 @@ export default hot(() => {
     }
     setCurrentStep(currentStep + 1);
     currentStepRef.current += 1;
-    console.log('Ok button clicked');
   };
 
   //关闭弹窗
   const handleCancel = () => {
     setVisible(false);
-    console.log('Cancel button clicked');
   };
 
   return (

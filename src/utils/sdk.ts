@@ -18,7 +18,7 @@ class SDKManager {
       await this.sdk.config(this.options);
       this.configured = true;
     } catch (error) {
-      console.error('SDK 调用失败', error);
+      throw error;
     }
     return this.sdk;
   };
