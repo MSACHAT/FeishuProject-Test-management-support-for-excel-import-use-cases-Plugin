@@ -209,35 +209,6 @@ const ProgressComponent = ({ currentStep, setCurrentError }: { currentStep: numb
     else{
       return "wait"
     }
-    // switch(step){
-    //   case STEP_1_UPLOAD:
-    //     if(currentStep === STEP_1_UPLOAD){
-    //       return "process"
-    //     }
-    //     else{
-    //       return "finish"
-    //     }
-    //   case STEP_2_PREVIEW:
-    //     if(currentStep === STEP_2_PREVIEW){
-    //       if(hasError){
-    //         return "error"
-    //       }
-    //       else{
-    //         return "process"
-    //       }
-    //     }
-    //     else if(currentStep > STEP_2_PREVIEW){
-    //       return "finish"
-    //     }
-    //     else{
-    //       return "wait"
-    //     }
-    //   case STEP_3_FINISH:
-    //     if(currentStep === STEP_3_FINISH){
-    //       return "finish"
-    //     }
-    // }
-    // return "finish"
   }
   return (
     <div className={"step-indicator"}>
