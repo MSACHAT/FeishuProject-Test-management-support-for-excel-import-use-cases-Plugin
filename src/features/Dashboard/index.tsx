@@ -1,6 +1,6 @@
 import { hot } from 'react-hot-loader/root';
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import { Upload, Button, Modal, Steps, ToastFactory, Card, Avatar, Table } from '@douyinfe/semi-ui';
+import { Upload, Button, Modal, Steps, ToastFactory, Card, Avatar, Table, Progress } from '@douyinfe/semi-ui';
 import './index.less';
 import { IconFile, IconHelpCircle,IconClear } from '@douyinfe/semi-icons';
 import * as XLSX from 'xlsx';
@@ -28,7 +28,7 @@ const SetFileContext = React.createContext((file: File) => {
 });
 
 //创建一个在页面顶部且置顶的弹窗
-const ToastOnTop = ToastFactory.create({
+export const ToastOnTop = ToastFactory.create({
   zIndex: 99999,
 });
 
@@ -48,6 +48,8 @@ const StepContent = ({ currentStep }) => {
   const [file, setFileState] = useState<File>();
   const [columns, setColumns] = useState<Object[]>([]);
   const [fields,setFields]=useState<any>([])
+  const [progress, setProgress] = useState<number>(0)
+  const [isWorkCreated, setIsWorkCreated] = useState<boolean>(false)//防止工作项被重复创建
 
   /*
   此处封装了用于检查表格是否存在错误的函数
@@ -75,10 +77,10 @@ const StepContent = ({ currentStep }) => {
           const projectKey = context.mainSpace?.id;
           const workItemTypeKey = context.activeWorkItem?.workObjectId;
           const fields = await axios.post(`${BASE_URL}/open_api/${projectKey}/field/all`,{work_item_type_key:workItemTypeKey},HEADERS);
+          console.log(fields)
           setFields(fields.data.data);
           const fieldNames = fields.data.data.map((field: { field_name: string; }) => field.field_name);
           let errorFields: string[] = [];
-          
           headline.forEach((field) => {
             if (fieldNames.indexOf(field) === -1) {
               errorFields.push(field);
@@ -118,8 +120,9 @@ const StepContent = ({ currentStep }) => {
         setCurrentError(err);
       });
     }
-    if(currentStep===STEP_3_FINISH){
-        mergeTestCases(resolvedExcelData,fields)
+    if(currentStep===STEP_3_FINISH&&!isWorkCreated){
+        mergeTestCases(resolvedExcelData,fields,setProgress)
+        setIsWorkCreated(true);
     }
   }, [currentStep, file, setIsReadyForNextStep, setCurrentError]);
 
@@ -168,7 +171,7 @@ const StepContent = ({ currentStep }) => {
           <Table columns={columns} dataSource={resolvedExcelData} pagination={{ pageSize: 5 }} />
         </div>
       )}
-      {currentStep === STEP_3_FINISH && <div>完成</div>}
+      {currentStep === STEP_3_FINISH && <div><Progress percent={progress} showInfo={true}/></div>}
     </>
   );
 };
@@ -286,7 +289,6 @@ export default hot(() => {
     }
     else if(currentStep===STEP_2_PREVIEW){
         setIsReadyForNextStep(true);
-        ToastOnTop.success("导入完成")
     }
     else{
         setIsReadyForNextStep(false)

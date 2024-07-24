@@ -2,6 +2,7 @@ import './index.less';
 import SDK from '@lark-project/js-sdk';
 import axios from 'axios';
 import { BASE_URL, HEADERS } from '../../constants';
+import { ToastOnTop } from './index';
 
 
 // SDK 配置函数，用于初始化 SDK 配置
@@ -70,28 +71,31 @@ interface TestCaseData {
  * 参数: testCaseDataList - 测试用例数据数组
  * 返回值: { hasError: boolean, errFields: string[] }
  */
-const request = async (testCaseDataList: TestCaseData[]): Promise<{ hasError: boolean, errFields: string[] }> => {
+const request = async (testCaseDataList: TestCaseData[],setProgess): Promise<{ hasError: boolean, errFields: string[] }> => {
     try {
         const context = await sdk.Context.load();
         const projectKey = context.mainSpace?.id;
         if (!projectKey) {
             throw new Error('项目密钥未找到');
         }
+        const INCREMENT_PERCENT=(1/testCaseDataList.length)*100;
 
         const errFields: string[] = [];
         for (const testCaseData of testCaseDataList) {
-            const response = await axios.post(
-                `${BASE_URL}/open_api/${projectKey}/work_item/create`,
-                {
-                    work_item_type_key: "63fc6356a3568b3fd3800e88",
-                    template_id: 1523819,
-                    field_value_pairs: testCaseData.field_value_pairs,
-                },
-                HEADERS
-            );
-            if (!response.data.success || response.data.errorCode) {
-                errFields.push(`工作项创建失败: ${JSON.stringify(testCaseData.field_value_pairs)}`);
-            }
+          console.log(testCaseData);
+            // const response = await axios.post(
+            //     `${BASE_URL}/open_api/${projectKey}/work_item/create`,
+            //     {
+            //         work_item_type_key: "63fc6356a3568b3fd3800e88",
+            //         template_id: 1523819,
+            //         field_value_pairs: testCaseData.field_value_pairs,
+            //     },
+            //     HEADERS
+            // );
+            // if (!response.data.success || response.data.errorCode) {
+            //     errFields.push(`工作项创建失败: ${JSON.stringify(testCaseData.field_value_pairs)}`);
+            // }
+            setProgess((prevState:number)=>prevState+INCREMENT_PERCENT)
         }
         return { hasError: errFields.length > 0, errFields };
     } catch (error) {
@@ -117,7 +121,7 @@ const createFieldMap = (data: Field[]): { [key: string]: string } => {
  *        fields - 字段数组
  * 返回值: TestCaseData[] - 合并后的测试用例数据数组
  */
-export function mergeTestCases(testCases: TestCase[], fields: Field[]): TestCaseData[] {
+export function mergeTestCases(testCases: TestCase[], fields: Field[], setProgess): TestCaseData[] {
     const fieldMap = createFieldMap(fields);
     let result: TestCaseData[] = [];
 
@@ -130,8 +134,9 @@ export function mergeTestCases(testCases: TestCase[], fields: Field[]): TestCase
             });
         result.push({ field_value_pairs: fieldValuePairs });
     });
+    console.log(result)
 
-    request(result);
+   request(result, setProgess).then(results => {ToastOnTop.success("导入完成!")})
     return result;
 }
 
