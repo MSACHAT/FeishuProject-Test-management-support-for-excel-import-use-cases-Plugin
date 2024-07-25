@@ -9,8 +9,22 @@ import { BeforeUploadProps } from '@douyinfe/semi-ui/lib/es/upload';
 import SDK from '@lark-project/js-sdk';
 import axios from 'axios';
 import { BASE_URL, HEADERS } from '../../constants';
-import { Field, mergeTestCases } from './request';
+import { Field, FieldOption, mergeTestCases } from './request';
 
+interface MetaField {
+  field_type_key: string;
+  is_validity: number;
+  label: string;
+  is_visibility: number;
+  field_alias: string;
+  field_key: string;
+  default_value: {
+    default_appear: number;
+  };
+  field_name: string;
+  is_required: number;
+  options?: FieldOption[];
+}
 
 const sdk = new SDK();
 
@@ -167,9 +181,14 @@ const StepContent = ({ currentStep }) => {
     };
 
     //检查必填的字段(用例名称和前置条件)是否存在
-    const checkRequired = (headers: string[], excelData: Object[], fields: Field[], errors: string[]): void => {
-      const requiredNames = fields.filter((field: Field) => (field.field_key === 'name') || (field.field_key))[0].field_name;
-
+    const checkRequired = (headers: string[], metaFields:MetaField[], errors: string[]): void => {
+      const IS_REQUIRED=1
+      const requiredNames = metaFields.filter((field: Field) => field.is_required===IS_REQUIRED).map((field: Field) => field.field_name);
+      for(const name of requiredNames) {
+        if(!headers.includes(name)) {
+          errors.push(`缺少必填字段:${name}`)
+        }
+      }
     };
 
 
@@ -190,6 +209,7 @@ const StepContent = ({ currentStep }) => {
           const projectKey = context.mainSpace?.id;
           const workItemTypeKey = context.activeWorkItem?.workObjectId;
           const fields = await axios.post(`${BASE_URL}/open_api/${projectKey}/field/all`, { work_item_type_key: workItemTypeKey }, HEADERS);
+          const metaFields = await axios.get(`${BASE_URL}/open_api/${projectKey}/work_item/${workItemTypeKey}/meta`,HEADERS)
           setFields(fields.data.data);
           const jsonDataCopy = JSON.parse(JSON.stringify(jsonData));
           setResolvedExcelData(optionMapping(jsonDataCopy, fields.data.data));
@@ -199,6 +219,7 @@ const StepContent = ({ currentStep }) => {
           let errors: string[] = [];
           checkHeaders(headers, fieldNames, errors);
           checkOptions(jsonData, fields.data.data, errors);
+          checkRequired(headers,metaFields.data.data,errors)
 
           if (errors.length === 0) {
             resolve({ hasError: false, errors: [] });

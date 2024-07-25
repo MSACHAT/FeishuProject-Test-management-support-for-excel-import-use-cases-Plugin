@@ -22,11 +22,7 @@ interface TestCase {
   [key: string]: any;
 }
 
-interface MergeTestCasesProps {
-  testCases: TestCase[];
-}
-
-interface FieldOption {
+export interface FieldOption {
   label: string;
   value: string;
   is_disabled: number;
