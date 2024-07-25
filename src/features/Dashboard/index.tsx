@@ -40,8 +40,10 @@ export const ToastOnTop = ToastFactory.create({
    返回值:progress组件
     */
 const StepContent = ({ currentStep }) => {
-  const [headers,setHeaders]=useState<string[]>([]);
+  const [headers, setHeaders] = useState<string[]>([]);
   const [resolvedExcelData, setResolvedExcelData] = useState<Object[]>([]);
+  //用于保存专门用来展示的exceldata
+  const [excelDataForDisplay,setExcelDataForDisplay] = useState<Object[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
   const setIsReadyForNextStep = useContext(SetIsReadyForNextStepContext);
   const setCurrentError = useContext(SetCurrentErrorContext);
@@ -51,6 +53,33 @@ const StepContent = ({ currentStep }) => {
   const [fields, setFields] = useState<any>([]);
   const [progress, setProgress] = useState<number>(0);
   const [isWorkCreated, setIsWorkCreated] = useState<boolean>(false);//防止工作项被重复创建
+
+  const optionMapping=(excelData:Object[],fields:Field[])=>{
+    const options = fields
+      .filter((field: Field) => {
+        return field.field_type_key === 'select' || field.field_type_key === 'multi_select';
+      })
+      .reduce((acc, field: Field) => {
+        let result: { [key: string]: string } = {};
+        if (field.options) {
+          for (const opt of field.options) {
+            result[opt.label] = opt.value;
+          }
+        }
+        acc[field.field_name] = result; // 动态设置键和值
+        return acc;
+      }, {} as { [key: string]: { [key: string]: string } }); // 指定初始值和累加器的类型
+
+    excelData = excelData.map((row: { [key: string]: any }) => {
+      for (const key of Object.keys(row)) {
+        if (options[key]) {
+          row[key] = options[key][row[key]];
+        }
+      }
+      return row;
+    });
+    return excelData;
+  }
 
   /*
   此处封装了用于检查表格是否存在错误的函数
@@ -62,7 +91,7 @@ const StepContent = ({ currentStep }) => {
     1. 没有错误: {hasError:false, errFields:[]}
     2. 有错误: {hasError:true, errFields:[<有问题的字段>]
    */
-    const checkErr = async (): Promise<{ hasError: boolean, errors: string[] }> => {
+  const checkErr = async (): Promise<{ hasError: boolean, errors: string[] }> => {
 
     //检查表头是否存在
     const checkHeaders = (headers: string[], fieldNames: string[], errors: string[]): void => {
@@ -94,27 +123,26 @@ const StepContent = ({ currentStep }) => {
           acc[field.field_name] = result; // 动态设置键和值
           return acc;
         }, {} as { [key: string]: string[] }); // 指定初始值和累加器的类型
-      console.log(options)
       excelData.forEach((row) => {
         const keys = Object.keys(row);
-        const optionKeys=Object.keys(options);
-          keys.forEach((key: string) => {
-            if (optionKeys.includes(key)&&(!options[key].includes(row[key]))) {
-              if(!errFields.includes(row[key]))
+        const optionKeys = Object.keys(options);
+        keys.forEach((key: string) => {
+          if (optionKeys.includes(key) && (!options[key].includes(row[key]))) {
+            if (!errFields.includes(row[key]))
               errFields.push(`${key}-${row[key]}`);
-            }
-          })
-      })
+          }
+        });
+      });
       if (errFields.length > 0) {
         errors.push(`选项不存在:${errFields.join(',')}`);
       }
     };
 
     //检查必填的字段(用例名称和前置条件)是否存在
-    const checkRequired=(headers: string[], excelData: Object[], fields: Field[], errors: string[]): void => {
-      const requiredName=fields.filter((field: Field) => field.field_key==="name")[0].field_name;
+    const checkRequired = (headers: string[], excelData: Object[], fields: Field[], errors: string[]): void => {
+      const requiredNames = fields.filter((field: Field) => (field.field_key === 'name') || (field.field_key))[0].field_name;
 
-      }
+    };
 
 
     const reader = new FileReader();
@@ -126,21 +154,23 @@ const StepContent = ({ currentStep }) => {
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
           const jsonData: Object[] = XLSX.utils.sheet_to_json(worksheet);
-          setResolvedExcelData(jsonData);
-          let headers = XLSX.utils.sheet_to_json(worksheet,{header:1})[0] as string[];
+          let headers = XLSX.utils.sheet_to_json(worksheet, { header: 1 })[0] as string[];
           //筛出所有的undef
-          headers=headers.filter((header)=>header)
-          setHeaders(headers)
+          headers = headers.filter((header) => header);
+          setHeaders(headers);
           const context = await sdk.Context.load();
           const projectKey = context.mainSpace?.id;
           const workItemTypeKey = context.activeWorkItem?.workObjectId;
           const fields = await axios.post(`${BASE_URL}/open_api/${projectKey}/field/all`, { work_item_type_key: workItemTypeKey }, HEADERS);
           setFields(fields.data.data);
+          const jsonDataCopy = JSON.parse(JSON.stringify(jsonData));
+          setResolvedExcelData(optionMapping(jsonDataCopy, fields.data.data));
+          setExcelDataForDisplay(jsonData)
           const fieldNames = fields.data.data.map((field: { field_name: string; }) => field.field_name);
           //用来储存错误
           let errors: string[] = [];
           checkHeaders(headers, fieldNames, errors);
-          checkOptions(jsonData,fields.data.data,errors)
+          checkOptions(jsonData, fields.data.data, errors);
 
           if (errors.length === 0) {
             resolve({ hasError: false, errors: [] });
@@ -168,7 +198,6 @@ const StepContent = ({ currentStep }) => {
           }
           setCurrentError('此表格数据有问题');
         } else {
-          setIsReadyForNextStep(false);
           setIsReadyForNextStep(true);
         }
       }).catch(err => {
@@ -192,7 +221,7 @@ const StepContent = ({ currentStep }) => {
   }, [resolvedExcelData]);
 
   useEffect(() => {
-    if(progress>=99){
+    if (progress >= 99) {
       setIsReadyForNextStep(true);
     }
   }, [progress]);
@@ -231,7 +260,7 @@ const StepContent = ({ currentStep }) => {
         <div className={'current-step-container'}>
           {errors.map((err) => <div style={{ display: 'flex', alignItems: 'center' }}><IconClear
             style={{ color: 'red' }} /><strong>{err}</strong></div>)}
-          <Table columns={columns} dataSource={resolvedExcelData} pagination={{ pageSize: 5 }} />
+          <Table columns={columns} dataSource={excelDataForDisplay} pagination={{ pageSize: 5 }} />
         </div>
       )}
       {currentStep === STEP_3_FINISH && <div><Progress percent={progress} showInfo={true} /></div>}
@@ -325,7 +354,7 @@ export default hot(() => {
     if (currentStepRef.current === STEP_2_PREVIEW) {
       setCurrentError('请稍等，正在加载');
     }
-    if(currentStepRef.current===STEP_3_FINISH){
+    if (currentStepRef.current === STEP_3_FINISH) {
       setCurrentError('导入中，请稍等');
     }
   }, [currentStep]);
