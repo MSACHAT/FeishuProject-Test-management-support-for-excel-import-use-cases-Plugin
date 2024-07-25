@@ -99,8 +99,9 @@ const StepContent = ({ currentStep }) => {
         const keys = Object.keys(row);
         const optionKeys=Object.keys(options);
           keys.forEach((key: string) => {
-            if (optionKeys.includes(key)&&options[key].includes(row[key])) {
-              errFields.push(key);
+            if (optionKeys.includes(key)&&(!options[key].includes(row[key]))) {
+              if(!errFields.includes(row[key]))
+              errFields.push(`${key}-${row[key]}`);
             }
           })
       })
