@@ -83,18 +83,18 @@ const request = async (testCaseDataList: TestCaseData[],setProgess): Promise<{ h
         const errFields: string[] = [];
         for (const testCaseData of testCaseDataList) {
           console.log(testCaseData);
-            // const response = await axios.post(
-            //     `${BASE_URL}/open_api/${projectKey}/work_item/create`,
-            //     {
-            //         work_item_type_key: "63fc6356a3568b3fd3800e88",
-            //         template_id: 1523819,
-            //         field_value_pairs: testCaseData.field_value_pairs,
-            //     },
-            //     HEADERS
-            // );
-            // if (!response.data.success || response.data.errorCode) {
-            //     errFields.push(`工作项创建失败: ${JSON.stringify(testCaseData.field_value_pairs)}`);
-            // }
+            const response = await axios.post(
+                `${BASE_URL}/open_api/${projectKey}/work_item/create`,
+                {
+                    work_item_type_key: "63fc6356a3568b3fd3800e88",
+                    template_id: 1523819,
+                    field_value_pairs: testCaseData.field_value_pairs,
+                },
+                HEADERS
+            );
+            if (!response.data.success || response.data.errorCode) {
+                errFields.push(`工作项创建失败: ${JSON.stringify(testCaseData.field_value_pairs)}`);
+            }
             setProgess((prevState:number)=>prevState+INCREMENT_PERCENT)
         }
         return { hasError: errFields.length > 0, errFields };
@@ -121,8 +121,28 @@ const createFieldMap = (data: Field[]): { [key: string]: string } => {
  *        fields - 字段数组
  * 返回值: TestCaseData[] - 合并后的测试用例数据数组
  */
+// 定义 actions 对象，包含不同的 action 函数
+const actions = {
+    "field_e42a97": (value) => {
+      // 直接修改传入的 value 参数
+      value.field_value = [{ // 假设 datadetail.field_value 是一个对象数组
+        value: value.field_value
+      }];
+      console.log("aaaaaa")
+    },
+    "priority":(value) => {
+        // 直接修改传入的 value 参数
+        value.field_value = { // 假设 datadetail.field_value 是一个对象数组
+          value: value.field_value
+        };
+        console.log("aaaaaa")
+      },
+  };
+
 export function mergeTestCases(testCases: TestCase[], fields: Field[], setProgess): TestCaseData[] {
     const fieldMap = createFieldMap(fields);
+    console.log("fieldMap")
+    console.log(fieldMap)
     let result: TestCaseData[] = [];
 
     testCases.forEach(testCase => {
@@ -130,13 +150,29 @@ export function mergeTestCases(testCases: TestCase[], fields: Field[], setProges
             .filter(([key]) => fieldMap[key]) // 仅保留在 fieldMap 中有对应 field_key 的项
             .map(([key, value]) => {
                 const fieldKey = fieldMap[key];
+
+                console.log( {field_key: fieldKey, field_value: value })
                 return { field_key: fieldKey, field_value: value };
+                // 这里优化代码
             });
         result.push({ field_value_pairs: fieldValuePairs });
     });
     console.log(result)
 
-   request(result, setProgess).then(results => {ToastOnTop.success("导入完成!")})
+
+
+    result.forEach(element => {
+        element.field_value_pairs.forEach(datadetail => {
+            if (actions[datadetail.field_key]) {
+                actions[datadetail.field_key](datadetail);
+            }
+        });
+    });
+  
+
+request(result, setProgess).then(results => {ToastOnTop.success("导入完成!")})
+console.log("Almkwmxomxksm")
+   console.log(result)
     return result;
 }
 
