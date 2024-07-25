@@ -1,7 +1,5 @@
 import './index.less';
 import SDK from '@lark-project/js-sdk';
-import axios from 'axios';
-import { BASE_URL, HEADERS } from '../../constants';
 import { ToastOnTop } from './index';
 
 
@@ -22,10 +20,6 @@ import { ToastOnTop } from './index';
 
 interface TestCase {
     [key: string]: any;
-}
-
-interface MergeTestCasesProps {
-    testCases: TestCase[];
 }
 
 interface FieldOption {

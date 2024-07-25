@@ -167,7 +167,7 @@ const StepContent = ({ currentStep }) => {
       )}
       {currentStep === STEP_2_PREVIEW && (
         <div className={'current-step-container'}>
-          {errors.map((err, index) =><div style={{display:'flex',alignItems:"center"}}><IconClear style={{color:"red"}}/><strong>{err}</strong></div>)}
+          {errors.map((err) =><div style={{display:'flex',alignItems:"center"}}><IconClear style={{color:"red"}}/><strong>{err}</strong></div>)}
           <Table columns={columns} dataSource={resolvedExcelData} pagination={{ pageSize: 5 }} />
         </div>
       )}
@@ -186,7 +186,7 @@ const StepContent = ({ currentStep }) => {
 
   需要注意:currentStep的索引是从0开始的
    */
-const ProgressComponent = ({ currentStep, setCurrentError }: { currentStep: number, setCurrentError }) => {
+const ProgressComponent = ({ currentStep }: { currentStep: number, setCurrentError: any }) => {
   return (
     <div className={"step-indicator"}>
       <Steps type="basic" current={currentStep} className={"steps"}>
@@ -304,7 +304,6 @@ export default hot(() => {
 
   return (
     <div className="dashboard-container" id="dashboard-container">
-
       <Button onClick={showDialog}>打开弹窗</Button>
       <Modal
         title="基本对话框"
@@ -315,6 +314,7 @@ export default hot(() => {
         width={'80vw'}
         height={'80vh'}
         okText={'下一步'}
+        className={"dashboard-container-modal"}
       >
         <SetIsReadyForNextStepContext.Provider value={(isReady) => setIsReadyForNextStep(isReady)}>
           <SetCurrentErrorContext.Provider value={(currentErr) => setCurrentError(currentErr)}>
