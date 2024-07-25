@@ -54,6 +54,16 @@ const StepContent = ({ currentStep }) => {
   const [progress, setProgress] = useState<number>(0);
   const [isWorkCreated, setIsWorkCreated] = useState<boolean>(false);//防止工作项被重复创建
 
+  /*
+  此函数用于把用户excel表格里的数据映射成调用API时传入的参数
+
+  参数:
+    1.excelData:解析完的excel表格数据
+    2.fields:飞书项目中的字段
+
+  返回值:
+    1.excelData:映射完的excel表格数据
+   */
   const optionMapping=(excelData:Object[],fields:Field[])=>{
     const options = fields
       .filter((field: Field) => {
@@ -93,7 +103,16 @@ const StepContent = ({ currentStep }) => {
    */
   const checkErr = async (): Promise<{ hasError: boolean, errors: string[] }> => {
 
-    //检查表头是否存在
+    /*
+    此函数用于检查表头是否存在
+
+    参数:
+      1.headers:excel表格的表头
+      2.fieldNames:飞书项目所有字段的名称
+      3.errors:外部传入的对象，有错误就push到这个对象中
+
+    返回值:无
+     */
     const checkHeaders = (headers: string[], fieldNames: string[], errors: string[]): void => {
       let errFields: string[] = [];
       headers.forEach((field) => {
@@ -106,7 +125,16 @@ const StepContent = ({ currentStep }) => {
       }
     };
 
-    //检查选项是否存在
+    /*
+    此函数用于检查选项是否存在
+
+    参数:
+      1.excelData:解析完的excel表格数据
+      2.fields:飞书项目的字段
+      3.errors:外部传入的对象，有错误就push到这个对象中
+
+    返回值：无
+     */
     const checkOptions = (excelData: Object[], fields: Field[], errors: string[]): void => {
       let errFields: string[] = [];
       const options = fields
