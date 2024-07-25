@@ -9,16 +9,14 @@ import { ToastOnTop } from './index';
   const sdk = new SDK();
 
 
-    setTimeout(async () => {
-      try {
-        await sdk.config({
+
+
+sdk.config({
           pluginId: 'MII_66977877C86E0004',
           isDebug: true,
         });
-      } catch (e) {
-       throw e
-      }
-    }, 0);
+
+    
 
 interface TestCase {
     [key: string]: any;
@@ -115,6 +113,14 @@ const createFieldMap = (data: Field[]): { [key: string]: string } => {
     }, {});
 };
 
+const createTypeMap = (data: Field[]): { [key: string]: string } => {
+    return data.reduce((map, field) => {
+        map[field.field_key] = field.field_type_key; // 将 field_key 作为键，field_name 作为值
+        return map;
+    }, {});
+};
+
+
 /*
  * 合并测试用例函数
  * 参数: testCases - 测试用例数组
@@ -123,14 +129,14 @@ const createFieldMap = (data: Field[]): { [key: string]: string } => {
  */
 // 定义 actions 对象，包含不同的 action 函数
 const actions = {
-    "field_e42a97": (value) => {
+    "multi_select": (value) => {
       // 直接修改传入的 value 参数
       value.field_value = [{ // 假设 datadetail.field_value 是一个对象数组
         value: value.field_value
       }];
       console.log("aaaaaa")
     },
-    "priority":(value) => {
+    "select":(value) => {
         // 直接修改传入的 value 参数
         value.field_value = { // 假设 datadetail.field_value 是一个对象数组
           value: value.field_value
@@ -141,8 +147,11 @@ const actions = {
 
 export function mergeTestCases(testCases: TestCase[], fields: Field[], setProgess): TestCaseData[] {
     const fieldMap = createFieldMap(fields);
+    const typeMap = createTypeMap(fields);
     console.log("fieldMap")
     console.log(fieldMap)
+    console.log("typeMap")
+    console.log(typeMap)
     let result: TestCaseData[] = [];
 
     testCases.forEach(testCase => {
@@ -163,8 +172,10 @@ export function mergeTestCases(testCases: TestCase[], fields: Field[], setProges
 
     result.forEach(element => {
         element.field_value_pairs.forEach(datadetail => {
-            if (actions[datadetail.field_key]) {
-                actions[datadetail.field_key](datadetail);
+            console.log("typeMap[datadetail.field_key]")
+            console.log(typeMap[datadetail.field_key])
+            if (actions[typeMap[datadetail.field_key]]) {
+                actions[typeMap[datadetail.field_key]](datadetail);
             }
         });
     });
