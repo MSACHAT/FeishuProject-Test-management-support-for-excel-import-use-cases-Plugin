@@ -2,14 +2,14 @@ import { hot } from 'react-hot-loader/root';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { Upload, Button, Modal, Steps, ToastFactory, Card, Avatar, Table, Progress } from '@douyinfe/semi-ui';
 import './index.less';
-import { IconFile, IconHelpCircle,IconClear } from '@douyinfe/semi-icons';
+import { IconFile, IconHelpCircle, IconClear } from '@douyinfe/semi-icons';
 import * as XLSX from 'xlsx';
 import Meta from '@douyinfe/semi-ui/lib/es/card/meta';
 import { BeforeUploadProps } from '@douyinfe/semi-ui/lib/es/upload';
 import SDK from '@lark-project/js-sdk';
 import axios from 'axios';
 import { BASE_URL, HEADERS } from '../../constants';
-import { mergeTestCases } from './request';
+import { Field, mergeTestCases } from './request';
 
 
 const sdk = new SDK();
@@ -40,6 +40,7 @@ export const ToastOnTop = ToastFactory.create({
    返回值:progress组件
     */
 const StepContent = ({ currentStep }) => {
+  const [headers,setHeaders]=useState<string[]>([]);
   const [resolvedExcelData, setResolvedExcelData] = useState<Object[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
   const setIsReadyForNextStep = useContext(SetIsReadyForNextStepContext);
@@ -47,9 +48,9 @@ const StepContent = ({ currentStep }) => {
   const [fileName, setFileNameState] = useState<string>('');
   const [file, setFileState] = useState<File>();
   const [columns, setColumns] = useState<Object[]>([]);
-  const [fields,setFields]=useState<any>([])
-  const [progress, setProgress] = useState<number>(0)
-  const [isWorkCreated, setIsWorkCreated] = useState<boolean>(false)//防止工作项被重复创建
+  const [fields, setFields] = useState<any>([]);
+  const [progress, setProgress] = useState<number>(0);
+  const [isWorkCreated, setIsWorkCreated] = useState<boolean>(false);//防止工作项被重复创建
 
   /*
   此处封装了用于检查表格是否存在错误的函数
@@ -61,7 +62,61 @@ const StepContent = ({ currentStep }) => {
     1. 没有错误: {hasError:false, errFields:[]}
     2. 有错误: {hasError:true, errFields:[<有问题的字段>]
    */
-  const checkErr = async (): Promise<{ hasError: boolean, errFields: string[] }> => {
+  const checkErr = async (): Promise<{ hasError: boolean, errors: string[] }> => {
+
+    //检查表头是否存在
+    const checkHeaders = (headers: string[], fieldNames: string[], errors: string[]): void => {
+      let errFields: string[] = [];
+      headers.forEach((field) => {
+        if (fieldNames.indexOf(field) === -1) {
+          errFields.push(field);
+        }
+      });
+      if (errFields.length > 0) {
+        errors.push(`表头不存在:${errFields.join(',')}`);
+      }
+    };
+
+    //检查选项是否存在
+    const checkOptions = (excelData: Object[], fields: Object[], errors: string[]): void => {
+      let errFields: string[] = [];
+      const options = fields
+        .filter((field: Field) => {
+          return field.field_type_key === 'select' || field.field_type_key === 'multi_select';
+        })
+        .reduce((acc, field: Field) => {
+          let result: string[] = [];
+          if (field.options) {
+            for (const opt of field.options) {
+              result.push(opt.label);
+            }
+          }
+          acc[field.field_name] = result; // 动态设置键和值
+          return acc;
+        }, {} as { [key: string]: string[] }); // 指定初始值和累加器的类型
+      console.log(options)
+      excelData.forEach((row) => {
+        const keys = Object.keys(row);
+        const optionKeys=Object.keys(options);
+          keys.forEach((key: string) => {
+            if (optionKeys.includes(key)&&options[key].includes(row[key])) {
+              errFields.push(key);
+            }
+          })
+      })
+      // for (const row of excelData) {
+      //   const keys = Object.keys(row);
+      //   keys.forEach((key: string) => {
+      //     if (options[key].indexOf(row[key]) == -1) {
+      //       errFields.push(key);
+      //     }
+      //   });
+      // }
+      if (errFields.length > 0) {
+        errors.push(`选项不存在:${errFields.join(',')}`);
+      }
+    };
+
     const reader = new FileReader();
     return new Promise((resolve, reject) => {
       reader.onload = async (e) => {
@@ -70,27 +125,26 @@ const StepContent = ({ currentStep }) => {
           const workbook = XLSX.read(data, { type: 'array' });
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
-          const jsonData:Object[] = XLSX.utils.sheet_to_json(worksheet);
+          const jsonData: Object[] = XLSX.utils.sheet_to_json(worksheet);
           setResolvedExcelData(jsonData);
-          const headline = Object.keys(jsonData[0] as object);
+          const headers = XLSX.utils.sheet_to_json(worksheet,{header:1})[0];
+          setHeaders(headers as string[])
           const context = await sdk.Context.load();
           const projectKey = context.mainSpace?.id;
           const workItemTypeKey = context.activeWorkItem?.workObjectId;
-          const fields = await axios.post(`${BASE_URL}/open_api/${projectKey}/field/all`,{work_item_type_key:workItemTypeKey},HEADERS);
-          console.log(fields)
+          const fields = await axios.post(`${BASE_URL}/open_api/${projectKey}/field/all`, { work_item_type_key: workItemTypeKey }, HEADERS);
           setFields(fields.data.data);
           const fieldNames = fields.data.data.map((field: { field_name: string; }) => field.field_name);
-          let errorFields: string[] = [];
-          headline.forEach((field) => {
-            if (fieldNames.indexOf(field) === -1) {
-              errorFields.push(field);
-            }
-          });
+          //用来储存错误
+          let errors: string[] = [];
+          checkHeaders(headers as string[], fieldNames, errors);
+          checkOptions(jsonData,fields.data.data,errors)
+          console.log(errors)
 
-          if (errorFields.length === 0) {
-            resolve({ hasError: false, errFields: [] });
+          if (errors.length === 0) {
+            resolve({ hasError: false, errors: [] });
           } else {
-            resolve({ hasError: true, errFields: errorFields });
+            resolve({ hasError: true, errors });
           }
         } else {
           reject('数据解析时遇到错误!');
@@ -109,7 +163,7 @@ const StepContent = ({ currentStep }) => {
         if (res.hasError) {
           setIsReadyForNextStep(false);
           if (errors.length === 0) {
-            setErrors([`表头有问题: ${res.errFields.join(', ')}`]);
+            setErrors(res.errors);
           }
           setCurrentError('此表格数据有问题');
         } else {
@@ -120,15 +174,15 @@ const StepContent = ({ currentStep }) => {
         setCurrentError(err);
       });
     }
-    if(currentStep===STEP_3_FINISH&&!isWorkCreated){
-        mergeTestCases(resolvedExcelData,fields,setProgress)
-        setIsWorkCreated(true);
+    if (currentStep === STEP_3_FINISH && !isWorkCreated) {
+      mergeTestCases(resolvedExcelData, fields, setProgress);
+      setIsWorkCreated(true);
     }
   }, [currentStep, file, setIsReadyForNextStep, setCurrentError]);
 
   useEffect(() => {
-    if (resolvedExcelData.length !== 0) {
-      setColumns(Object.keys(resolvedExcelData[0] as Object).map(header => ({
+    if (headers.length !== 0) {
+      setColumns(headers.map(header => ({
         title: header,
         dataIndex: header,
       })));
@@ -167,11 +221,12 @@ const StepContent = ({ currentStep }) => {
       )}
       {currentStep === STEP_2_PREVIEW && (
         <div className={'current-step-container'}>
-          {errors.map((err) =><div style={{display:'flex',alignItems:"center"}}><IconClear style={{color:"red"}}/><strong>{err}</strong></div>)}
+          {errors.map((err) => <div style={{ display: 'flex', alignItems: 'center' }}><IconClear
+            style={{ color: 'red' }} /><strong>{err}</strong></div>)}
           <Table columns={columns} dataSource={resolvedExcelData} pagination={{ pageSize: 5 }} />
         </div>
       )}
-      {currentStep === STEP_3_FINISH && <div><Progress percent={progress} showInfo={true}/></div>}
+      {currentStep === STEP_3_FINISH && <div><Progress percent={progress} showInfo={true} /></div>}
     </>
   );
 };
@@ -188,8 +243,8 @@ const StepContent = ({ currentStep }) => {
    */
 const ProgressComponent = ({ currentStep }: { currentStep: number, setCurrentError: any }) => {
   return (
-    <div className={"step-indicator"}>
-      <Steps type="basic" current={currentStep} className={"steps"}>
+    <div className={'step-indicator'}>
+      <Steps type="basic" current={currentStep} className={'steps'}>
         <Steps.Step title="第一步:导入" description="导入xlsx. csv. 格式的文件" />
         <Steps.Step title="第二步:预览" description="预览导入的结果" />
         <Steps.Step title="第三步:完成" description="大功告成" />
@@ -227,7 +282,7 @@ const UploadComponent = () => {
       setFile(blob);
       setFileName(blob.name);
       setIsReadyForNextStep(true);
-      ToastOnTop.success("上传成功")
+      ToastOnTop.success('上传成功');
     } else {
       ToastOnTop.error('文件已损坏');
     }
@@ -236,7 +291,7 @@ const UploadComponent = () => {
   };
 
   return (
-    <div className={"upload-button"}>
+    <div className={'upload-button'}>
       <Upload
         draggable={true}
         dragMainText={'点击上传文件或拖拽文件到这里'}
@@ -276,7 +331,7 @@ export default hot(() => {
     setCurrentStep(0);
     currentStepRef.current = 0;
     setVisible(true);
-    setCurrentError("未上传文件!")
+    setCurrentError('未上传文件!');
   };
 
   const handleOk = () => {
@@ -284,14 +339,12 @@ export default hot(() => {
       ToastOnTop.error(currentError);
       return;
     }
-    if(currentStep===STEP_3_FINISH){
-        setVisible(false)
-    }
-    else if(currentStep===STEP_2_PREVIEW){
-        setIsReadyForNextStep(true);
-    }
-    else{
-        setIsReadyForNextStep(false)
+    if (currentStep === STEP_3_FINISH) {
+      setVisible(false);
+    } else if (currentStep === STEP_2_PREVIEW) {
+      setIsReadyForNextStep(true);
+    } else {
+      setIsReadyForNextStep(false);
     }
     setCurrentStep(currentStep + 1);
     currentStepRef.current += 1;
@@ -314,7 +367,7 @@ export default hot(() => {
         width={'80vw'}
         height={'80vh'}
         okText={'下一步'}
-        className={"dashboard-container-modal"}
+        className={'dashboard-container-modal'}
       >
         <SetIsReadyForNextStepContext.Provider value={(isReady) => setIsReadyForNextStep(isReady)}>
           <SetCurrentErrorContext.Provider value={(currentErr) => setCurrentError(currentErr)}>

@@ -29,7 +29,7 @@ interface FieldOption {
     is_visibility: number;
 }
 
-interface Field {
+export interface Field {
     is_required: number;
     field_alias: string;
     field_type_key: string;
