@@ -62,7 +62,7 @@ const StepContent = ({ currentStep }) => {
     1. 没有错误: {hasError:false, errFields:[]}
     2. 有错误: {hasError:true, errFields:[<有问题的字段>]
    */
-  const checkErr = async (): Promise<{ hasError: boolean, errors: string[] }> => {
+    const checkErr = async (): Promise<{ hasError: boolean, errors: string[] }> => {
 
     //检查表头是否存在
     const checkHeaders = (headers: string[], fieldNames: string[], errors: string[]): void => {
@@ -78,7 +78,7 @@ const StepContent = ({ currentStep }) => {
     };
 
     //检查选项是否存在
-    const checkOptions = (excelData: Object[], fields: Object[], errors: string[]): void => {
+    const checkOptions = (excelData: Object[], fields: Field[], errors: string[]): void => {
       let errFields: string[] = [];
       const options = fields
         .filter((field: Field) => {
@@ -105,18 +105,17 @@ const StepContent = ({ currentStep }) => {
             }
           })
       })
-      // for (const row of excelData) {
-      //   const keys = Object.keys(row);
-      //   keys.forEach((key: string) => {
-      //     if (options[key].indexOf(row[key]) == -1) {
-      //       errFields.push(key);
-      //     }
-      //   });
-      // }
       if (errFields.length > 0) {
         errors.push(`选项不存在:${errFields.join(',')}`);
       }
     };
+
+    //检查必填的字段(用例名称和前置条件)是否存在
+    const checkRequired=(headers: string[], excelData: Object[], fields: Field[], errors: string[]): void => {
+      const requiredName=fields.filter((field: Field) => field.field_key==="name")[0].field_name;
+
+      }
+
 
     const reader = new FileReader();
     return new Promise((resolve, reject) => {
@@ -134,6 +133,7 @@ const StepContent = ({ currentStep }) => {
           const projectKey = context.mainSpace?.id;
           const workItemTypeKey = context.activeWorkItem?.workObjectId;
           const fields = await axios.post(`${BASE_URL}/open_api/${projectKey}/field/all`, { work_item_type_key: workItemTypeKey }, HEADERS);
+          console.log(fields)
           setFields(fields.data.data);
           const fieldNames = fields.data.data.map((field: { field_name: string; }) => field.field_name);
           //用来储存错误

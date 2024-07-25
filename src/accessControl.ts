@@ -22,7 +22,8 @@ export async function authorize(code: string) {
   try {
     const pluginToken = await fetchPluginToken(PLUGIN_ID, PLUGIN_SECRET);
     localStorage.setItem('user_jwt', pluginToken);
-
+    const context = await sdk.Context.load()
+    localStorage.setItem("user_key",context.loginUser.id)
     return true;
   } catch (error) {
     return false;
