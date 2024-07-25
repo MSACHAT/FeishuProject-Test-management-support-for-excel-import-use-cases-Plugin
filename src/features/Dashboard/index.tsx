@@ -127,20 +127,20 @@ const StepContent = ({ currentStep }) => {
           const worksheet = workbook.Sheets[sheetName];
           const jsonData: Object[] = XLSX.utils.sheet_to_json(worksheet);
           setResolvedExcelData(jsonData);
-          const headers = XLSX.utils.sheet_to_json(worksheet,{header:1})[0];
-          setHeaders(headers as string[])
+          let headers = XLSX.utils.sheet_to_json(worksheet,{header:1})[0] as string[];
+          //筛出所有的undef
+          headers=headers.filter((header)=>header)
+          setHeaders(headers)
           const context = await sdk.Context.load();
           const projectKey = context.mainSpace?.id;
           const workItemTypeKey = context.activeWorkItem?.workObjectId;
           const fields = await axios.post(`${BASE_URL}/open_api/${projectKey}/field/all`, { work_item_type_key: workItemTypeKey }, HEADERS);
-          console.log(fields)
           setFields(fields.data.data);
           const fieldNames = fields.data.data.map((field: { field_name: string; }) => field.field_name);
           //用来储存错误
           let errors: string[] = [];
-          checkHeaders(headers as string[], fieldNames, errors);
+          checkHeaders(headers, fieldNames, errors);
           checkOptions(jsonData,fields.data.data,errors)
-          console.log(errors)
 
           if (errors.length === 0) {
             resolve({ hasError: false, errors: [] });
@@ -168,6 +168,7 @@ const StepContent = ({ currentStep }) => {
           }
           setCurrentError('此表格数据有问题');
         } else {
+          setIsReadyForNextStep(false);
           setIsReadyForNextStep(true);
         }
       }).catch(err => {
@@ -189,6 +190,12 @@ const StepContent = ({ currentStep }) => {
       })));
     }
   }, [resolvedExcelData]);
+
+  useEffect(() => {
+    if(progress>=99){
+      setIsReadyForNextStep(true);
+    }
+  }, [progress]);
 
   return (
     <>
@@ -318,6 +325,9 @@ export default hot(() => {
     if (currentStepRef.current === STEP_2_PREVIEW) {
       setCurrentError('请稍等，正在加载');
     }
+    if(currentStepRef.current===STEP_3_FINISH){
+      setCurrentError('导入中，请稍等');
+    }
   }, [currentStep]);
 
   useEffect(() => {
@@ -342,8 +352,6 @@ export default hot(() => {
     }
     if (currentStep === STEP_3_FINISH) {
       setVisible(false);
-    } else if (currentStep === STEP_2_PREVIEW) {
-      setIsReadyForNextStep(true);
     } else {
       setIsReadyForNextStep(false);
     }
