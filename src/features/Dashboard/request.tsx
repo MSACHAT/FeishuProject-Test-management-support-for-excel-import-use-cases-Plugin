@@ -88,8 +88,11 @@ const request = async (testCaseDataList: TestCaseData[],setProgess): Promise<{ h
       );
       if (!response.data.success || response.data.errorCode) {
         errFields.push(`工作项创建失败: ${JSON.stringify(testCaseData.field_value_pairs)}`);
+        ToastOnTop.error(`工作项创建失败: ${JSON.stringify(testCaseData.field_value_pairs)}`);
       }
-      setProgess((prevState:number)=>prevState+INCREMENT_PERCENT)
+      else {
+        setProgess((prevState: number) => prevState + INCREMENT_PERCENT)
+      }
     }
     return { hasError: errFields.length > 0, errFields };
   } catch (error) {
