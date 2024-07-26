@@ -57,7 +57,7 @@ const StepContent = ({ currentStep }) => {
   const [headers, setHeaders] = useState<string[]>([]);
   const [resolvedExcelData, setResolvedExcelData] = useState<Object[]>([]);
   //用于保存专门用来展示的exceldata
-  const [excelDataForDisplay,setExcelDataForDisplay] = useState<Object[]>([]);
+  const [excelDataForDisplay, setExcelDataForDisplay] = useState<Object[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
   const setIsReadyForNextStep = useContext(SetIsReadyForNextStepContext);
   const setCurrentError = useContext(SetCurrentErrorContext);
@@ -78,7 +78,7 @@ const StepContent = ({ currentStep }) => {
   返回值:
     1.excelData:映射完的excel表格数据
    */
-  const optionMapping=(excelData:Object[],fields:Field[])=>{
+  const optionMapping = (excelData: Object[], fields: Field[]) => {
     const options = fields
       .filter((field: Field) => {
         return field.field_type_key === 'select' || field.field_type_key === 'multi_select';
@@ -181,11 +181,11 @@ const StepContent = ({ currentStep }) => {
     };
 
     //检查必填的字段(用例名称和前置条件)是否存在
-    const checkRequired = (headers: string[], metaFields:MetaField[], errors: string[]): void => {
-      const IS_REQUIRED=1
-      const requiredNames = metaFields.filter((field: Field) => field.is_required===IS_REQUIRED).map((field: Field) => field.field_name);
-      for(const name of requiredNames) {
-        if(!headers.includes(name)) {
+    const checkRequired = (headers: string[], metaFields: MetaField[], errors: string[]): void => {
+      const IS_REQUIRED = 1
+      const requiredNames = metaFields.filter((field: Field) => field.is_required === IS_REQUIRED).map((field: Field) => field.field_name);
+      for (const name of requiredNames) {
+        if (!headers.includes(name)) {
           errors.push(`缺少必填字段:${name}`)
         }
       }
@@ -208,23 +208,28 @@ const StepContent = ({ currentStep }) => {
           const context = await sdk.Context.load();
           const projectKey = context.mainSpace?.id;
           const workItemTypeKey = context.activeWorkItem?.workObjectId;
-          const fields = await axios.post(`${BASE_URL}/open_api/${projectKey}/field/all`, { work_item_type_key: workItemTypeKey }, HEADERS);
-          const metaFields = await axios.get(`${BASE_URL}/open_api/${projectKey}/work_item/${workItemTypeKey}/meta`,HEADERS)
-          setFields(fields.data.data);
-          const jsonDataCopy = JSON.parse(JSON.stringify(jsonData));
-          setResolvedExcelData(optionMapping(jsonDataCopy, fields.data.data));
-          setExcelDataForDisplay(jsonData)
-          const fieldNames = fields.data.data.map((field: { field_name: string; }) => field.field_name);
-          //用来储存错误
-          let errors: string[] = [];
-          checkHeaders(headers, fieldNames, errors);
-          checkOptions(jsonData, fields.data.data, errors);
-          checkRequired(headers,metaFields.data.data,errors)
+          try {
+            const fields = await axios.post(`${BASE_URL}/open_api/${projectKey}/field/all`, { work_item_type_key: workItemTypeKey }, HEADERS);
+            const metaFields = await axios.get(`${BASE_URL}/open_api/${projectKey}/work_item/${workItemTypeKey}/meta`, HEADERS)
+            setFields(fields.data.data);
+            const jsonDataCopy = JSON.parse(JSON.stringify(jsonData));
+            setResolvedExcelData(optionMapping(jsonDataCopy, fields.data.data));
+            setExcelDataForDisplay(jsonData)
+            const fieldNames = fields.data.data.map((field: { field_name: string; }) => field.field_name);
+            //用来储存错误
+            let errors: string[] = [];
+            checkHeaders(headers, fieldNames, errors);
+            checkOptions(jsonData, fields.data.data, errors);
+            checkRequired(headers, metaFields.data.data, errors)
 
-          if (errors.length === 0) {
-            resolve({ hasError: false, errors: [] });
-          } else {
-            resolve({ hasError: true, errors });
+            if (errors.length === 0) {
+              resolve({ hasError: false, errors: [] });
+            } else {
+              resolve({ hasError: true, errors });
+            }
+          }
+          catch{
+            ToastOnTop.error("数据获取失败，请刷新重试")
           }
         } else {
           reject('数据解析时遇到错误!');
@@ -398,6 +403,7 @@ export default hot(() => {
   const [isReadyForNextStep, setIsReadyForNextStep] = useState(false);
   //此变量用于保存当前无法进行下一步操作的原因
   const [currentError, setCurrentError] = useState('未上传文件');
+  const [okText,setOkText] = useState('下一步');
   useEffect(() => {
     setCurrentStep(currentStepRef.current);
     if (currentStepRef.current === STEP_2_PREVIEW) {
@@ -405,6 +411,7 @@ export default hot(() => {
     }
     if (currentStepRef.current === STEP_3_FINISH) {
       setCurrentError('导入中，请稍等');
+      setOkText("完成")
     }
   }, [currentStep]);
 
@@ -421,6 +428,7 @@ export default hot(() => {
     currentStepRef.current = 0;
     setVisible(true);
     setCurrentError('未上传文件!');
+    setOkText("下一步")
   };
 
   const handleOk = () => {
@@ -453,7 +461,7 @@ export default hot(() => {
         closeOnEsc={false}
         width={'80vw'}
         height={'80vh'}
-        okText={'下一步'}
+        okText={okText}
         className={'dashboard-container-modal'}
       >
         <SetIsReadyForNextStepContext.Provider value={(isReady) => setIsReadyForNextStep(isReady)}>
