@@ -2,7 +2,6 @@ import './index.less';
 import SDK from '@lark-project/js-sdk';
 import axios from 'axios';
 import { BASE_URL, HEADERS } from '../../constants';
-import { ToastOnTop } from './index';
 
 
 // SDK 配置函数，用于初始化 SDK 配置
@@ -86,9 +85,9 @@ const request = async (testCaseDataList: TestCaseData[],setProgess): Promise<{ h
         },
         HEADERS
       );
-      if (!response.data.success || response.data.errorCode) {
+      console.log(response.data);
+      if (response.data.errorCode) {
         errFields.push(`工作项创建失败: ${JSON.stringify(testCaseData.field_value_pairs)}`);
-        ToastOnTop.error(`工作项创建失败: ${JSON.stringify(testCaseData.field_value_pairs)}`);
       }
       else {
         setProgess((prevState: number) => prevState + INCREMENT_PERCENT)
@@ -180,7 +179,7 @@ export function mergeTestCases(testCases: TestCase[], fields: Field[], setProges
   });
 
 
-  request(result, setProgess).then(results => {ToastOnTop.success("导入完成!")})
+  request(result, setProgess)
   console.log("Almkwmxomxksm")
   console.log(result)
   return result;
