@@ -6,7 +6,7 @@ import { ToastOnTop } from './index';
 
 
 // SDK 配置函数，用于初始化 SDK 配置
-  const sdk = new SDK();
+const sdk = new SDK();
 
 
 
@@ -19,7 +19,7 @@ sdk.config({
     
 
 interface TestCase {
-    [key: string]: any;
+  [key: string]: any;
 }
 
 interface MergeTestCasesProps {
@@ -31,14 +31,14 @@ interface compound_field{
     field_key: string;
 }
 
-interface FieldOption {
+export interface FieldOption {
     label: string;
     value: string;
     is_disabled: number;
     is_visibility: number;
 }
 
-interface Field {
+export interface Field {
     is_required: number;
     field_alias: string;
     field_type_key: string;
@@ -55,10 +55,10 @@ interface Field {
 }
 
 export interface DataFields {
-    err: {};
-    err_code: number;
-    err_msg: string;
-    data: Field[];
+  err: {};
+  err_code: number;
+  err_msg: string;
+  data: Field[];
 }
 
 interface FieldValuePair {
@@ -68,7 +68,7 @@ interface FieldValuePair {
 }
 
 interface TestCaseData {
-    field_value_pairs: FieldValuePair[];
+  field_value_pairs: FieldValuePair[];
 }
 
 /*
@@ -77,13 +77,13 @@ interface TestCaseData {
  * 返回值: { hasError: boolean, errFields: string[] }
  */
 const request = async (testCaseDataList: TestCaseData[],setProgess): Promise<{ hasError: boolean, errFields: string[] }> => {
-    try {
-        const context = await sdk.Context.load();
-        const projectKey = context.mainSpace?.id;
-        if (!projectKey) {
-            throw new Error('项目密钥未找到');
-        }
-        const INCREMENT_PERCENT=(1/testCaseDataList.length)*100;
+  try {
+    const context = await sdk.Context.load();
+    const projectKey = context.mainSpace?.id;
+    if (!projectKey) {
+      throw new Error('项目密钥未找到');
+    }
+    const INCREMENT_PERCENT=(1/testCaseDataList.length)*100;
 
         const errFields: string[] = [];
         for (const testCaseData of testCaseDataList) {
@@ -319,6 +319,3 @@ result = result.filter(item => item.field_value_pairs[0]?.field_key === 'name');
 request(result, setProgess).then(results => {ToastOnTop.success("导入完成!")})
     return result;
 }
-
-
-export default mergeTestCases;
