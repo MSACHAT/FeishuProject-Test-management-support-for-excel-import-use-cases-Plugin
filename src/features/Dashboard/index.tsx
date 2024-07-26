@@ -103,7 +103,7 @@ const StepContent = ({ currentStep }) => {
       return row;
     });
     return excelData;
-  }
+  };
 
   /*
   此处封装了用于检查表格是否存在错误的函数
@@ -180,13 +180,23 @@ const StepContent = ({ currentStep }) => {
       }
     };
 
-    //检查必填的字段(用例名称和前置条件)是否存在
+    /*
+     此函数用于检查必填的字段(用例名称和前置条件)是否存在
+
+     参数:
+       1.headers:excel文档中解析出来的表头
+       2.metaFields:飞书文档中的元字段
+       3.errors:外部传入的对象，有错误就push到这个对象中
+
+     返回值:无
+
+     */
     const checkRequired = (headers: string[], metaFields: MetaField[], errors: string[]): void => {
-      const IS_REQUIRED = 1
+      const IS_REQUIRED = 1;
       const requiredNames = metaFields.filter((field: Field) => field.is_required === IS_REQUIRED).map((field: Field) => field.field_name);
       for (const name of requiredNames) {
         if (!headers.includes(name)) {
-          errors.push(`缺少必填字段:${name}`)
+          errors.push(`缺少必填字段:${name}`);
         }
       }
     };
@@ -210,26 +220,35 @@ const StepContent = ({ currentStep }) => {
           const workItemTypeKey = context.activeWorkItem?.workObjectId;
           try {
             const fields = await axios.post(`${BASE_URL}/open_api/${projectKey}/field/all`, { work_item_type_key: workItemTypeKey }, HEADERS);
-            const metaFields = await axios.get(`${BASE_URL}/open_api/${projectKey}/work_item/${workItemTypeKey}/meta`, HEADERS)
+            const metaFields = await axios.get(`${BASE_URL}/open_api/${projectKey}/work_item/${workItemTypeKey}/meta`, HEADERS);
             setFields(fields.data.data);
             const jsonDataCopy = JSON.parse(JSON.stringify(jsonData));
             setResolvedExcelData(optionMapping(jsonDataCopy, fields.data.data));
-            setExcelDataForDisplay(jsonData)
-            const fieldNames = fields.data.data.map((field: { field_name: string; }) => field.field_name);
+            setExcelDataForDisplay(jsonData);
+            const fieldNames = fields.data.data.reduce(function(accumulator:string[]=[],current){
+              if(current.field_type_key==="compound_field"){
+                for(const field of current.compound_fields){
+                  accumulator.push(field.field_name);
+                }
+              }
+              accumulator.push(current.field_name);
+              return accumulator;
+            }, []);
+            const metaFieldNames = metaFields.data.data.map((metaField: { field_name: string }) => metaField.field_name);
             //用来储存错误
             let errors: string[] = [];
-            checkHeaders(headers, fieldNames, errors);
+
+            checkHeaders(headers, [...fieldNames, ...metaFieldNames], errors);
             checkOptions(jsonData, fields.data.data, errors);
-            checkRequired(headers, metaFields.data.data, errors)
+            checkRequired(headers, metaFields.data.data, errors);
 
             if (errors.length === 0) {
               resolve({ hasError: false, errors: [] });
             } else {
               resolve({ hasError: true, errors });
             }
-          }
-          catch{
-            ToastOnTop.error("数据获取失败，请刷新重试")
+          } catch {
+            ToastOnTop.error('数据获取失败，请刷新重试');
           }
         } else {
           reject('数据解析时遇到错误!');
@@ -277,6 +296,7 @@ const StepContent = ({ currentStep }) => {
   useEffect(() => {
     if (progress >= 99) {
       setIsReadyForNextStep(true);
+      ToastOnTop.success("导入完成")
     }
   }, [progress]);
 
@@ -403,7 +423,7 @@ export default hot(() => {
   const [isReadyForNextStep, setIsReadyForNextStep] = useState(false);
   //此变量用于保存当前无法进行下一步操作的原因
   const [currentError, setCurrentError] = useState('未上传文件');
-  const [okText,setOkText] = useState('下一步');
+  const [okText, setOkText] = useState('下一步');
   useEffect(() => {
     setCurrentStep(currentStepRef.current);
     if (currentStepRef.current === STEP_2_PREVIEW) {
@@ -411,7 +431,7 @@ export default hot(() => {
     }
     if (currentStepRef.current === STEP_3_FINISH) {
       setCurrentError('导入中，请稍等');
-      setOkText("完成")
+      setOkText('完成');
     }
   }, [currentStep]);
 
@@ -428,7 +448,7 @@ export default hot(() => {
     currentStepRef.current = 0;
     setVisible(true);
     setCurrentError('未上传文件!');
-    setOkText("下一步")
+    setOkText('下一步');
   };
 
   const handleOk = () => {

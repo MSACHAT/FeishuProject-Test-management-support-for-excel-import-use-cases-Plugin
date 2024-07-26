@@ -16,14 +16,10 @@ sdk.config({
           isDebug: true,
         });
 
-    
+
 
 interface TestCase {
   [key: string]: any;
-}
-
-interface MergeTestCasesProps {
-    testCases: TestCase[];
 }
 
 interface compound_field{
@@ -96,10 +92,12 @@ const request = async (testCaseDataList: TestCaseData[],setProgess): Promise<{ h
                 },
                 HEADERS
             );
-            if (!response.data.success || response.data.errorCode) {
+            if (response.data.errorCode) {
                 errFields.push(`工作项创建失败: ${JSON.stringify(testCaseData.field_value_pairs)}`);
             }
-            setProgess((prevState:number)=>prevState+INCREMENT_PERCENT)
+            else {
+              setProgess((prevState: number) => prevState + INCREMENT_PERCENT)
+            }
         }
         return { hasError: errFields.length > 0, errFields };
     } catch (error) {
@@ -150,7 +148,6 @@ const restrictedDict = {
     结果: null
   };
 
-let count = 0;
 const actions = {
     "multi_select": (value) => {
       // 直接修改传入的 value 参数
@@ -184,7 +181,7 @@ const actions = {
                                 ]
                             }
                         ],
-        
+
                         "field_key": "field_bb1da7"
                     },
                     {
@@ -205,11 +202,11 @@ const actions = {
                         ]
                     }
                 ])
-                
+
                 value.field_value = dataOutPut
                 restrictedDict["步骤"] = null;
                 restrictedDict["结果"] = null;
-                
+
         }else{
             value.field_value = dataOutPut
 
@@ -217,9 +214,9 @@ const actions = {
 
 
 
-    
 
-        
+
+
 
       }
   };
@@ -227,9 +224,9 @@ const actions = {
 export function mergeTestCases(testCases: TestCase[], fields: Field[], setProgess): TestCaseData[] {
 
     const fieldMap = createFieldMap(fields);
-    
+
     const typeMap = createTypeMap(fields);
-  
+
 
     const compMap = createFieldCompMap(fields);
 
@@ -239,20 +236,20 @@ export function mergeTestCases(testCases: TestCase[], fields: Field[], setProges
         const keys = Object.keys(compMap)[0];
 
 
-    
+
         fieldMap[compMap[keys][0].field_name] = keys;
         fieldMap[compMap[keys][1].field_name] = keys;
 
-    
+
         typeMap[keys]="compound_fields";
 
 
     }
-    
+
     let result: TestCaseData[] = [];
 
 
-    
+
 
     testCases.forEach(testCase => {
         const fieldValuePairs: FieldValuePair[] = Object.entries(testCase)
@@ -294,7 +291,7 @@ result = result.filter(item => item.field_value_pairs[0]?.field_key === 'name');
 
     result.forEach(element => {
         const savedFieldKeys:string[]=[]
-        
+
         element.field_value_pairs.forEach(datadetail => {
 
             if (actions[typeMap[datadetail.field_key]]) {
@@ -309,13 +306,13 @@ result = result.filter(item => item.field_value_pairs[0]?.field_key === 'name');
             return false
         })
 
-        
+
         dataOutPut = []
     });
-    
 
-  
 
-request(result, setProgess).then(results => {ToastOnTop.success("导入完成!")})
+
+
+    request(result, setProgess)
     return result;
 }
