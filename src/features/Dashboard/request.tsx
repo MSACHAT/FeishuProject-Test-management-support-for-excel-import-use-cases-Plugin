@@ -2,7 +2,6 @@ import './index.less';
 import SDK from '@lark-project/js-sdk';
 import axios from 'axios';
 import { BASE_URL, HEADERS } from '../../constants';
-import { ToastOnTop } from './index';
 
 
 // SDK 配置函数，用于初始化 SDK 配置
