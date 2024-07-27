@@ -73,16 +73,6 @@
         "key": "control_demo",
         "name": "进度条控件",
         "description": "控件功能"
-      },
-      {
-        "type": "BOARD",
-        "icon": "{\"color\":\"#B449C2\",\"type\":\"work_object_icon_rocket\"}",
-        "work_item_type": [
-          "_all"
-        ],
-        "key": "board_n57b",
-        "name": "Excel导入",
-        "description": "导航独立路由页功能"
       }
     ]
   },
