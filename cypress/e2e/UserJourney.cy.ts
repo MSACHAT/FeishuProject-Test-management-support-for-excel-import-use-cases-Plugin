@@ -1,13 +1,29 @@
 describe('开心路径', () => {
   before(() => {
-    cy.visit('https://project.feishu.cn/jerrysspace/test_cases/homepage');
-    cy.wait(100000);
-  });
-  beforeEach(() => {
     cy.visit(
-      'https://project.feishu.cn/jerrysspace/test_cases/detail/4505594137?parentUrl=%2Fjerrysspace%2Ftest_cases%2Fhomepage#MII_669626B3D1C6C002-dashboard_9w9z',
+      'https://accounts.feishu.cn/accounts/page/login?app_id=104&app_name=meego&no_trap=1&pattern=4&redirect_uri=https%3A%2F%2Fproject.feishu.cn%2FfetchCookieByLogin%3Fstate%3Dhttps%3A%2F%2Fproject.feishu.cn%2F%26has_channel%3Dtrue&template_id=6992782334254432259',
     );
+    cy.wait(50000);
+    cy.url().should('include', 'https://project.feishu.cn/');
+    cy.visit('https://project.feishu.cn/jerrysspace/test_cases/homepage');
+    cy.wait(10000);
+    cy.url().should('include', 'https://project.feishu.cn/jerrysspace/test_cases/homepage');
+    cy.visit(
+      'https://project.feishu.cn/jerrysspace/test_cases/detail/4510405762?parentUrl=%2Fjerrysspace%2Ftest_cases%2Fhomepage',
+    );
+    cy.wait(10000);
+    cy.url().should(
+      'include',
+      'https://project.feishu.cn/jerrysspace/test_cases/detail/4510405762?parentUrl=%2Fjerrysspace%2Ftest_cases%2Fhomepage',
+    );
+    cy.wait(10000);
+    cy.reload();
+
+    cy.wait(50000);
+    cy.wait(50000);
+    cy.get('span.sortable-tab-name-text').contains('Excel导入').click();
   });
+
   it('1. 用户点击导入excel文件按钮', () => {
     cy.get('.dashboard-container').find('button').should('exist').click();
   });
