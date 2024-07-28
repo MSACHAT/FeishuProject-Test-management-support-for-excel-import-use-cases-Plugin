@@ -71,39 +71,45 @@ interface TestCaseData {
  * 参数: testCaseDataList - 测试用例数据数组
  * 返回值: { hasError: boolean, errFields: string[] }
  */
-const request = async (testCaseDataList: TestCaseData[],setProgess): Promise<{ hasError: boolean, errFields: string[] }> => {
-  try {
-    const context = await sdk.Context.load();
-    const projectKey = context.mainSpace?.id;
-    if (!projectKey) {
-      throw new Error('项目密钥未找到');
-    }
-    const INCREMENT_PERCENT=(1/testCaseDataList.length)*100;
-
-        const errFields: string[] = [];
-        for (const testCaseData of testCaseDataList) {
-            const response = await axios.post(
-                `${BASE_URL}/open_api/${projectKey}/work_item/create`,
-                {
-                    work_item_type_key: "63fc6356a3568b3fd3800e88",
-                    template_id: 1523819,
-                    field_value_pairs: testCaseData.field_value_pairs,
-                },
-                HEADERS
-            );
-            if (response.data.errorCode) {
-                errFields.push(`工作项创建失败: ${JSON.stringify(testCaseData.field_value_pairs)}`);
-            }
-            else {
-              setProgess((prevState: number) => prevState + INCREMENT_PERCENT)
-            }
+const request = async (testCaseDataList, setProgress) => {
+    try {
+        
+      const context = await sdk.Context.load();
+      const projectKey = context.mainSpace?.id;
+      if (!projectKey) {
+        throw new Error('项目密钥未找到');
+      }
+      const INCREMENT_PERCENT = (1 / testCaseDataList.length) * 100;
+  
+      const errFields: string[] = [];
+      for (const testCaseData of testCaseDataList) {
+        const response = await axios.post(
+          `${BASE_URL}/open_api/${projectKey}/work_item/create`,
+          {
+            work_item_type_key: "63fc6356a3568b3fd3800e88",
+            template_id: 1523819,
+            field_value_pairs: testCaseData.field_value_pairs,
+          },
+          HEADERS
+        );
+        if (response.data.errorCode) {
+          errFields.push(`工作项创建失败: ${JSON.stringify(testCaseData.field_value_pairs)}`);
+        } else {
+          setProgress((prevState) => prevState + INCREMENT_PERCENT);
         }
-        return { hasError: errFields.length > 0, errFields };
+      }
+  
+      if (errFields.length > 0) {
+        // 显示错误弹窗
+        alert('错误信息：\n' + errFields.join('\n'));
+      }
+      return { hasError: errFields.length > 0, errFields };
     } catch (error) {
-        return { hasError: true, errFields: ['请求失败'] };
+      // 显示错误弹窗
+      alert('请求失败: ' + error.message);
+      return { hasError: true, errFields: ['请求失败'] };
     }
-};
-
+  };
 /*
  * 创建字段映射函数
  * 参数: data - 字段数组
@@ -141,6 +147,8 @@ const createTypeMap = (data: Field[]): { [key: string]: string|any } => {
  * 返回值: TestCaseData[] - 合并后的测试用例数据数组
  */
 // 定义 actions 对象，包含不同的 action 函数
+let compoundFieldsData:any = {}
+
 let dataOutPut:any[][] = [];
 const restrictedDict = {
     步骤: null,
@@ -163,6 +171,7 @@ const actions = {
       "compound_fields":(value) =>{
         if(!restrictedDict['步骤']){
             restrictedDict["步骤"] = value.field_value;
+
         }else if(!restrictedDict["结果"]){
             restrictedDict["结果"] = value.field_value;
         }
@@ -181,10 +190,10 @@ const actions = {
                             }
                         ],
 
-                        "field_key": "field_bb1da7"
+                        "field_key": compoundFieldsData["case_detail_step"]
                     },
                     {
-                        "field_key": "field_a5c6ef",
+                        "field_key": compoundFieldsData["case_detail_result"],
                         "field_value": [
                             {
                                 "type": "paragraph",
@@ -228,6 +237,14 @@ export function mergeTestCases(testCases: TestCase[], fields: Field[], setProges
 
 
     const compMap = createFieldCompMap(fields);
+
+//  改为field_alias
+    const aliasToKeyMap = Object.values(compMap).flat().reduce((map, field) => {
+        map[field.field_alias] = field.field_key;
+        return map;
+    }, {});
+    compoundFieldsData = aliasToKeyMap
+
 
     // 将 compMap 中的所有键和值添加到 fieldMap 数组中
 
@@ -285,6 +302,7 @@ for (let i = 0; i < result.length; i++) {
     }
 }
 
+
 // 清理数组，只保留具有 field_key: 'name' 的项
 result = result.filter(item => item.field_value_pairs[0]?.field_key === 'name');
 
@@ -308,6 +326,7 @@ result = result.filter(item => item.field_value_pairs[0]?.field_key === 'name');
 
         dataOutPut = []
     });
+
 
 
 
