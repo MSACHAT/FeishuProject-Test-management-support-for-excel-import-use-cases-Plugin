@@ -10,7 +10,6 @@ import SDK from '@lark-project/js-sdk';
 import axios from 'axios';
 import { BASE_URL, HEADERS } from '../../constants';
 import { Field, FieldOption, mergeTestCases } from './request';
-import content from '*.svg';
 
 interface MetaField {
   field_type_key: string;
@@ -281,6 +280,8 @@ const StepContent = ({ currentStep }) => {
       });
     }
     if (currentStep === STEP_3_FINISH && !isWorkCreated) {
+      setProgress(0)
+      setIsReadyForNextStep(false);
       mergeTestCases(resolvedExcelData, fields, setProgress);
       setIsWorkCreated(true);
     }
@@ -296,6 +297,7 @@ const StepContent = ({ currentStep }) => {
   }, [resolvedExcelData]);
 
   useEffect(() => {
+    setIsReadyForNextStep(false);
     if (progress >= 99) {
       setIsReadyForNextStep(true);
       ToastOnTop.success("导入完成,即将帮您自动跳转")
@@ -437,6 +439,7 @@ export default hot(() => {
       setCurrentError('请稍等，正在加载');
     }
     if (currentStepRef.current === STEP_3_FINISH) {
+      setIsReadyForNextStep(false)
       setCurrentError('导入中，请稍等');
       setOkText('完成');
     }
@@ -463,14 +466,15 @@ export default hot(() => {
       ToastOnTop.error(currentError);
       return;
     }
-    if (currentStep === STEP_3_FINISH) {
-      setIsReadyForNextStep(false);
-      setVisible(false);
-    } else {
-      setIsReadyForNextStep(false);
+    else {
+      if (currentStep === STEP_3_FINISH) {
+        setVisible(false);
+      } else {
+        setIsReadyForNextStep(false);
+      }
+      setCurrentStep(currentStep + 1);
+      currentStepRef.current += 1;
     }
-    setCurrentStep(currentStep + 1);
-    currentStepRef.current += 1;
   };
 
   //关闭弹窗
