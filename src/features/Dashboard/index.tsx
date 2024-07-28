@@ -10,6 +10,7 @@ import SDK from '@lark-project/js-sdk';
 import axios from 'axios';
 import { BASE_URL, HEADERS } from '../../constants';
 import { Field, FieldOption, mergeTestCases } from './request';
+import content from '*.svg';
 
 interface MetaField {
   field_type_key: string;
@@ -211,6 +212,7 @@ const StepContent = ({ currentStep }) => {
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
           const jsonData: Object[] = XLSX.utils.sheet_to_json(worksheet);
+          console.log(jsonData)
           let headers = XLSX.utils.sheet_to_json(worksheet, { header: 1 })[0] as string[];
           //筛出所有的undef
           headers = headers.filter((header) => header);
@@ -296,7 +298,11 @@ const StepContent = ({ currentStep }) => {
   useEffect(() => {
     if (progress >= 99) {
       setIsReadyForNextStep(true);
-      ToastOnTop.success("导入完成")
+      ToastOnTop.success("导入完成,即将帮您自动跳转")
+      setTimeout(async () => {
+        const context = await sdk.Context.load();
+        sdk.navigation.open(`https://project.feishu.cn/${context.mainSpace?.id}/test_cases/homepage`)
+      },1000)
     }
   }, [progress]);
 
@@ -332,6 +338,7 @@ const StepContent = ({ currentStep }) => {
       )}
       {currentStep === STEP_2_PREVIEW && (
         <div className={'current-step-container'}>
+           <h3 style={{color:"orange"}}>⚠️:当前版本无法导入任何需要选中人员选项的字段</h3>
           {errors.map((err) => <div style={{ display: 'flex', alignItems: 'center' }}><IconClear
             style={{ color: 'red' }} /><strong>{err}</strong></div>)}
           <Table columns={columns} dataSource={excelDataForDisplay} pagination={{ pageSize: 5 }} />
@@ -457,6 +464,7 @@ export default hot(() => {
       return;
     }
     if (currentStep === STEP_3_FINISH) {
+      setIsReadyForNextStep(false);
       setVisible(false);
     } else {
       setIsReadyForNextStep(false);
@@ -474,6 +482,7 @@ export default hot(() => {
     <div className="dashboard-container" id="dashboard-container">
       <Button onClick={showDialog}>打开弹窗</Button>
       <Modal
+        closable={false}
         title="基本对话框"
         visible={visible}
         onOk={handleOk}
