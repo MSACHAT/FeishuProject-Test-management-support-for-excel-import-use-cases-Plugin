@@ -2,6 +2,7 @@ import './index.less';
 import SDK from '@lark-project/js-sdk';
 import axios from 'axios';
 import { BASE_URL, HEADERS } from '../../constants';
+import { ToastOnTop } from '.';
 
 
 // SDK 配置函数，用于初始化 SDK 配置
@@ -102,12 +103,12 @@ const request = async (testCaseDataList, setProgress) => {
   
       if (errFields.length > 0) {
         // 显示错误弹窗
-        alert('错误信息：\n' + errFields.join('\n'));
+        ToastOnTop.error('错误信息：\n' + errFields.join('\n'));
       }
       return { hasError: errFields.length > 0, errFields };
     } catch (error) {
       // 显示错误弹窗
-      alert('请求失败: ' + error.message);
+      ToastOnTop.error('请求失败: ' + error.message);
       return { hasError: true, errFields: ['请求失败'] };
     }
   };
@@ -222,21 +223,15 @@ const actions = {
         }
 
 
-
-
-
-
-
       }
   };
 
 export function mergeTestCases(testCases: TestCase[], fields: Field[], setProgess): TestCaseData[] {
 
     const fieldMap = createFieldMap(fields);
-    console.log(fieldMap)
+
 
     const typeMap = createTypeMap(fields);
-    console.log(typeMap)
 
 
     const compMap = createFieldCompMap(fields);
@@ -253,15 +248,9 @@ export function mergeTestCases(testCases: TestCase[], fields: Field[], setProges
 
     if (compMap) {
         const keys = Object.keys(compMap)[0];
-
-
-
         fieldMap[compMap[keys][0].field_name] = keys;
         fieldMap[compMap[keys][1].field_name] = keys;
-
-
         typeMap[keys]="compound_fields";
-
 
     }
 
@@ -294,6 +283,7 @@ for (let i = 0; i < result.length; i++) {
         // 如果有，保存当前项作为上一个有效的项
         lastValidItem = item;
     } else {
+        
         // 如果没有，与上一个有效的项合并
         if (lastValidItem) {
             // 将当前项的 field_value_pairs 添加到上一个有效的项中
@@ -332,8 +322,8 @@ result = result.filter(item => item.field_value_pairs[0]?.field_key === 'name');
 
 
 
+    
 
-
-    // request(result, setProgess)
+    request(result, setProgess)
     return result;
 }
