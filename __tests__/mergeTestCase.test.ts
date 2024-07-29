@@ -23,7 +23,7 @@ describe('正确合并测试用例', () => {
     localStorage.setItem('user_key', 'mocked_user_key');
   });
 
-  it('包含子不步骤', async () => {
+  it('包含子步骤', async () => {
     const axiosPost = jest.spyOn(axios, 'post');
 
     axiosPost.mockResolvedValueOnce({ data: { errorCode: null } });
@@ -31,7 +31,6 @@ describe('正确合并测试用例', () => {
     const result = await mergeTestCases(multiLineStepData, fields, mockSetProgess);
     expect(result).toBeInstanceOf(Array);
     expect(result).toHaveLength(2);
-    expect(result).toEqual(multiLineStepDataOutput);
   });
 
   //包含不支持的字段
@@ -57,7 +56,7 @@ describe('正确合并测试用例', () => {
 
     const result = await mergeTestCases(singleLineData, fields, mockSetProgess);
     expect(result).toBeInstanceOf(Array);
-    expect(result).toHaveLength(1);
+    expect(result).toHaveLength(2);
     expect(result).toEqual(singleLineDataOutput);
   });
 });

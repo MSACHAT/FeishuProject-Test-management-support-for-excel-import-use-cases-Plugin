@@ -27,8 +27,8 @@ describe('开心路径', () => {
     cy.get('[role="dialog"]').should('exist');
 
     //上传文件
-    const filePath = 'example(withAllSupportFields).xlsx';
-    cy.get('.semi-upload-hidden-input').should('be.visible').selectFile(filePath, { force: true });
+    const filePath = 'cypress/fixtures/example(withAllSupportFields).xlsx';
+    cy.get('.semi-upload-hidden-input').selectFile(filePath, { force: true });
 
     cy.contains('span', '上传成功').should('be.visible');
 
@@ -71,22 +71,23 @@ describe('开心路径', () => {
         cy.get('td').eq(6).should('have.attr', 'title', 'adw');
         cy.get('td').eq(7).should('have.attr', 'title', 'asdad');
       });
+
+    // 验证第三行的每个单元格内容
+    cy.get('tbody > tr')
+      .eq(2)
+      .within(() => {
+        cy.get('td').eq(0).should('be.empty');
+        cy.get('td').eq(1).should('be.empty');
+        cy.get('td').eq(2).should('be.empty');
+        cy.get('td').eq(3).should('be.empty');
+        cy.get('td').eq(4).should('be.empty');
+        cy.get('td').eq(5).should('be.empty');
+        cy.get('td').eq(6).should('have.attr', 'title', 'asdi');
+        cy.get('td').eq(7).should('have.attr', 'title', 'djbda');
+      });
+
+    cy.get('button[aria-label="confirm"]').click();
+
+    cy.contains('span', '导入完成，即将帮您自动跳转').should('be.visible');
   });
-  // 验证第三行的每个单元格内容
-  cy.get('tbody > tr')
-    .eq(2)
-    .within(() => {
-      cy.get('td').eq(0).should('be.empty');
-      cy.get('td').eq(1).should('be.empty');
-      cy.get('td').eq(2).should('be.empty');
-      cy.get('td').eq(3).should('be.empty');
-      cy.get('td').eq(4).should('be.empty');
-      cy.get('td').eq(5).should('be.empty');
-      cy.get('td').eq(6).should('have.attr', 'title', 'asdi');
-      cy.get('td').eq(7).should('have.attr', 'title', 'djbda');
-    });
-
-  cy.get('button[aria-label="confirm"]').click();
-
-  cy.contains('span', '导入完成，即将帮您自动跳转').should('be.visible');
 });

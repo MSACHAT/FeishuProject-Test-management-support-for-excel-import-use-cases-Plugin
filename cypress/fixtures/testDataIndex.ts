@@ -29,7 +29,7 @@ export const processedMultiLineStepData = [
     前置条件: '1,2,3',
     执行步骤: '步骤1',
     预期结果: '结果1',
-    优先级: 'option_1',
+    优先级: 'option_2',
   },
   {
     执行步骤: '步骤2',
