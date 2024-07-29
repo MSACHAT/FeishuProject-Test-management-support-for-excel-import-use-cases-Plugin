@@ -4,7 +4,7 @@
     "integrate_points": [
       {
         "type": "DASHBOARD",
-        "key": "dashboard_9w9z",
+        "key": "dashboard_ewrcrb",
         "name": "Excel导入",
         "description": "详情页 Tab 功能",
         "icon": "",
@@ -82,7 +82,7 @@
     }
   },
   "domain": "https://project.feishu.cn",
-  "pluginID": "MII_669626B3D1C6C002",
-  "version": "0.0.1",
-  "pluginSecret": "9b36d0013b73ba70318f84e76865ab699fd8120b280e355139e06b9ee35945de303580400b6c6022dfccfd9881672c04"
+  "pluginID": "MII_66977877C86E0004",
+  "version": "0.0.10",
+  "pluginSecret": "d15252479d026a19c4983adcffa32bbe3a288495eb9357279f9ab90e29c6500669805286f4d73a1189851558fd0598a6"
 }

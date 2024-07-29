@@ -108,8 +108,7 @@ const StepContent = ({ currentStep }) => {
   /*
   此处封装了用于检查表格是否存在错误的函数
 
-  参数:
-    1. headline:表头
+  参数:无
 
   返回值:
     1. 没有错误: {hasError:false, errFields:[]}
@@ -211,7 +210,6 @@ const StepContent = ({ currentStep }) => {
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
           const jsonData: Object[] = XLSX.utils.sheet_to_json(worksheet);
-          console.log(jsonData)
           let headers = XLSX.utils.sheet_to_json(worksheet, { header: 1 })[0] as string[];
           //筛出所有的undef
           headers = headers.filter((header) => header);
@@ -223,6 +221,7 @@ const StepContent = ({ currentStep }) => {
             const fields = await axios.post(`${BASE_URL}/open_api/${projectKey}/field/all`, { work_item_type_key: workItemTypeKey }, HEADERS);
             const metaFields = await axios.get(`${BASE_URL}/open_api/${projectKey}/work_item/${workItemTypeKey}/meta`, HEADERS);
             setFields(fields.data.data);
+            console.log(metaFields)
             const jsonDataCopy = JSON.parse(JSON.stringify(jsonData));
             setResolvedExcelData(optionMapping(jsonDataCopy, fields.data.data));
             setExcelDataForDisplay(jsonData);
@@ -340,7 +339,10 @@ const StepContent = ({ currentStep }) => {
       )}
       {currentStep === STEP_2_PREVIEW && (
         <div className={'current-step-container'}>
-           <h3 style={{color:"orange"}}>⚠️:当前版本无法导入任何需要选中人员选项的字段</h3>
+           <h3 style={{color:"orange"}}>
+             ⚠️:当前版本无法导入任何需要选中人员选项的字段<br/>
+             ⚠️:请保证excel文件中没有空行
+           </h3>
           {errors.map((err) => <div style={{ display: 'flex', alignItems: 'center' }}><IconClear
             style={{ color: 'red' }} /><strong>{err}</strong></div>)}
           <Table columns={columns} dataSource={excelDataForDisplay} pagination={{ pageSize: 5 }} />
