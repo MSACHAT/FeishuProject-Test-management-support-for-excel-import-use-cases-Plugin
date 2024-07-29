@@ -9,12 +9,12 @@ describe('开心路径', () => {
     cy.wait(10000);
     cy.url().should('include', 'https://project.feishu.cn/jerrysspace/test_cases/homepage');
     cy.visit(
-      'https://project.feishu.cn/jerrysspace/test_cases/detail/4510405762?parentUrl=%2Fjerrysspace%2Ftest_cases%2Fhomepage',
+      'https://project.feishu.cn/jerrysspace/test_cases/detail/4528484072?parentUrl=%2Fjerrysspace%2Ftest_cases%2Fhomepage',
     );
     cy.wait(10000);
     cy.url().should(
       'include',
-      'https://project.feishu.cn/jerrysspace/test_cases/detail/4510405762?parentUrl=%2Fjerrysspace%2Ftest_cases%2Fhomepage',
+      'https://project.feishu.cn/jerrysspace/test_cases/detail/4528484072?parentUrl=%2Fjerrysspace%2Ftest_cases%2Fhomepage',
     );
     cy.wait(10000);
     cy.reload();

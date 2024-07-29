@@ -401,12 +401,14 @@ export const fields = [
 ];
 
 //包含跨多行的子步骤数据
+//包含所有可用字段
 export const multiLineStepData = [
   {
     用例名称: '测试插件点位',
     前置条件: '1,2,3',
     执行步骤: '步骤1',
     预期结果: '结果1',
+    优先级: 'option_1',
   },
   {
     执行步骤: '步骤2',
@@ -417,6 +419,7 @@ export const multiLineStepData = [
     前置条件: '1,2,3',
     执行步骤: '步骤1',
     预期结果: '结果1',
+    优先级: 'option_1',
   },
   {
     执行步骤: '步骤2',
@@ -443,6 +446,14 @@ export const multiLineStepDataOutput = [
       {
         field_key: 'field_2c7371',
         field_value: '结果1',
+      },
+      {
+        field_key: 'priority',
+        field_value: [{ value: 'option_1' }],
+      },
+      {
+        field_key: 'field_e42a97',
+        field_value: [{ value: 'testcase_function' }, { value: 'testcase_compatibility' }],
       },
     ],
   },
@@ -493,5 +504,45 @@ export const inputWithUnsupportField = [
   {
     执行步骤: '步骤2',
     预期结果: ' 结果2',
+  },
+];
+
+//只包含单行数据
+export const singleLineData = [
+  {
+    用例名称: '测试插件点位',
+    前置条件: '1,2,3',
+  },
+  {
+    用例名称: '测试插件点位',
+    前置条件: '1,2,3',
+  },
+];
+
+//只包含单行数据输出
+export const singleLineDataOutput = [
+  {
+    field_value_pairs: [
+      {
+        field_key: 'name',
+        field_value: '测试插件点位',
+      },
+      {
+        field_key: 'field_f717b4',
+        field_value: '1,2,3',
+      },
+    ],
+  },
+  {
+    field_value_pairs: [
+      {
+        field_key: 'name',
+        field_value: '测试插件点位',
+      },
+      {
+        field_key: 'field_f717b4',
+        field_value: '1,2,3',
+      },
+    ],
   },
 ];
