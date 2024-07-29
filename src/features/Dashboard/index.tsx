@@ -92,26 +92,25 @@ export const optionMapping = (excelData: Object[], fields: Field[]) => {
 /*
  此处封装了用于检查表格是否存在错误的函数
 
- 参数:
-   1. headline:表头
+参数:
+  1.setHeaders:用于设置表头
+  2.setResolvedExcelData:用于设置解析完的excel数据
+  3.setExcelDataForDisplay:用于设置用于展示的excel数据
+  4.setFields:用于设置飞书项目的字段
+  5.file:未解析的excel文件
 
- 返回值:
-   1. 没有错误: {hasError:false, errFields:[]}
-   2. 有错误: {hasError:true, errFields:[<有问题的字段>]
-  */
-export const checkErr = async (
-  setHeaders: { (value: React.SetStateAction<string[]>): void; (arg0: string[]): void },
-  setResolvedExcelData: {
-    (value: React.SetStateAction<Object[]>): void;
-    (arg0: Object[]): void;
-  },
-  setExcelDataForDisplay: { (value: React.SetStateAction<Object[]>): void; (arg0: Object[]): void },
-  setFields: {
-    (value: any): void;
-    (arg0: any): void;
-  },
-  file: Blob,
-): Promise<{ hasError: boolean; errors: string[] }> => {
+返回值:
+  1. 没有错误: {hasError:false, errFields:[]}
+  2. 有错误: {hasError:true, errFields:[<有问题的字段>]
+ */
+export const checkErr = async (setHeaders: { (value: React.SetStateAction<string[]>): void; (arg0: string[]): void; }, setResolvedExcelData: {
+  (value: React.SetStateAction<Object[]>): void;
+  (arg0: Object[]): void;
+}, setExcelDataForDisplay: { (value: React.SetStateAction<Object[]>): void; (arg0: Object[]): void; }, setFields: {
+  (value: any): void;
+  (arg0: any): void;
+}, file: Blob): Promise<{ hasError: boolean, errors: string[] }> => {
+
   /*
   此函数用于检查表头是否存在
 
@@ -160,12 +159,13 @@ export const checkErr = async (
         acc[field.field_name] = result; // 动态设置键和值
         return acc;
       }, {} as { [key: string]: string[] }); // 指定初始值和累加器的类型
-    excelData.forEach(row => {
+    excelData.forEach((row) => {
       const keys = Object.keys(row);
       const optionKeys = Object.keys(options);
       keys.forEach((key: string) => {
-        if (optionKeys.includes(key) && !options[key].includes(row[key])) {
-          if (!errFields.includes(row[key])) errFields.push(`${key}-${row[key]}`);
+        if (optionKeys.includes(key) && (!options[key].includes(row[key]))) {
+          if (!errFields.includes(row[key]))
+            errFields.push(`${key}-${row[key]}`);
         }
       });
     });
@@ -187,9 +187,7 @@ export const checkErr = async (
    */
   const checkRequired = (headers: string[], metaFields: MetaField[], errors: string[]): void => {
     const IS_REQUIRED = 1;
-    const requiredNames = metaFields
-      .filter((field: Field) => field.is_required === IS_REQUIRED)
-      .map((field: Field) => field.field_name);
+    const requiredNames = metaFields.filter((field: Field) => field.is_required === IS_REQUIRED).map((field: Field) => field.field_name);
     for (const name of requiredNames) {
       if (!headers.includes(name)) {
         errors.push(`缺少必填字段:${name}`);
@@ -199,14 +197,18 @@ export const checkErr = async (
 
   const reader = new FileReader();
   return new Promise((resolve, reject) => {
-    reader.onload = async e => {
+    reader.onload = async (e) => {
       if (e.target && e.target.result) {
+        //用来储存错误
+        let errors: string[] = [];
         const data = new Uint8Array(e.target.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: 'array' });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         const jsonData: Object[] = XLSX.utils.sheet_to_json(worksheet);
-        console.log(jsonData);
+        if(jsonData.length===0){
+         resolve({hasError:true,errors:["请勿传入空表格"]})
+        }
         let headers = XLSX.utils.sheet_to_json(worksheet, { header: 1 })[0] as string[];
         //筛出所有的undef
         headers = headers.filter(header => header);
@@ -215,38 +217,22 @@ export const checkErr = async (
         const projectKey = context.mainSpace?.id;
         const workItemTypeKey = context.activeWorkItem?.workObjectId;
         try {
-          const fields = await axios.post(
-            `${BASE_URL}/open_api/${projectKey}/field/all`,
-            { work_item_type_key: workItemTypeKey },
-            HEADERS,
-          );
-          const metaFields = await axios.get(
-            `${BASE_URL}/open_api/${projectKey}/work_item/${workItemTypeKey}/meta`,
-            HEADERS,
-          );
+          const fields = await axios.post(`${BASE_URL}/open_api/${projectKey}/field/all`, { work_item_type_key: workItemTypeKey }, HEADERS);
+          const metaFields = await axios.get(`${BASE_URL}/open_api/${projectKey}/work_item/${workItemTypeKey}/meta`, HEADERS);
           setFields(fields.data.data);
           const jsonDataCopy = JSON.parse(JSON.stringify(jsonData));
           setResolvedExcelData(optionMapping(jsonDataCopy, fields.data.data));
           setExcelDataForDisplay(jsonData);
-          const fieldNames = fields.data.data.reduce(function (
-            accumulator: string[] = [],
-            current,
-          ) {
-            if (current.field_type_key === 'compound_field') {
-              for (const field of current.compound_fields) {
+          const fieldNames = fields.data.data.reduce(function(accumulator:string[]=[],current){
+            if(current.field_type_key==="compound_field"){
+              for(const field of current.compound_fields){
                 accumulator.push(field.field_name);
               }
             }
             accumulator.push(current.field_name);
             return accumulator;
-          },
-          []);
-          const metaFieldNames = metaFields.data.data.map(
-            (metaField: { field_name: string }) => metaField.field_name,
-          );
-          //用来储存错误
-          let errors: string[] = [];
-
+          }, []);
+          const metaFieldNames = metaFields.data.data.map((metaField: { field_name: string }) => metaField.field_name);
           checkHeaders(headers, [...fieldNames, ...metaFieldNames], errors);
           checkOptions(jsonData, fields.data.data, errors);
           checkRequired(headers, metaFields.data.data, errors);
@@ -376,13 +362,11 @@ const StepContent = ({ currentStep }) => {
       )}
       {currentStep === STEP_2_PREVIEW && (
         <div className={'current-step-container'}>
-          <h3 style={{ color: 'orange' }}>⚠️:当前版本无法导入任何需要选中人员选项的字段</h3>
-          {errors.map(err => (
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <IconClear style={{ color: 'red' }} />
-              <strong>{err}</strong>
-            </div>
-          ))}
+           <h3 style={{color:"orange"}}>
+             ⚠️:当前版本无法导入任何需要选中人员选项的字段
+           </h3>
+          {errors.map((err) => <div style={{ display: 'flex', alignItems: 'center' }}><IconClear
+            style={{ color: 'red' }} /><strong>{err}</strong></div>)}
           <Table columns={columns} dataSource={excelDataForDisplay} pagination={{ pageSize: 5 }} />
         </div>
       )}
