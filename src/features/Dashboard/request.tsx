@@ -67,7 +67,6 @@ interface TestCaseData {
 const request = async (
   testCaseDataList: TestCaseData[],
   setProgess,
-  hasError?,
 ): Promise<{ hasError: boolean; errFields: string[] }> => {
   try {
     const context = await sdk.Context.load();
