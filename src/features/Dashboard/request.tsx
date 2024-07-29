@@ -76,6 +76,7 @@ const request = async (testCaseDataList, setProgress) => {
         
       const context = await sdk.Context.load();
       const projectKey = context.mainSpace?.id;
+      const workItemTypeKey = context.activeWorkItem?.workObjectId;
       if (!projectKey) {
         throw new Error('项目密钥未找到');
       }
@@ -86,7 +87,7 @@ const request = async (testCaseDataList, setProgress) => {
         const response = await axios.post(
           `${BASE_URL}/open_api/${projectKey}/work_item/create`,
           {
-            work_item_type_key: "63fc6356a3568b3fd3800e88",
+            work_item_type_key: workItemTypeKey,
             template_id: 1523819,
             field_value_pairs: testCaseData.field_value_pairs,
           },
@@ -232,8 +233,10 @@ const actions = {
 export function mergeTestCases(testCases: TestCase[], fields: Field[], setProgess): TestCaseData[] {
 
     const fieldMap = createFieldMap(fields);
+    console.log(fieldMap)
 
     const typeMap = createTypeMap(fields);
+    console.log(typeMap)
 
 
     const compMap = createFieldCompMap(fields);
@@ -331,6 +334,6 @@ result = result.filter(item => item.field_value_pairs[0]?.field_key === 'name');
 
 
 
-    request(result, setProgess)
+    // request(result, setProgess)
     return result;
 }
