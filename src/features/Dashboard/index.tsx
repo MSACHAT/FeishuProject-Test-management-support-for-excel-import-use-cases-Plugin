@@ -1,6 +1,16 @@
 import { hot } from 'react-hot-loader/root';
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import { Upload, Button, Modal, Steps, ToastFactory, Card, Avatar, Table, Progress } from '@douyinfe/semi-ui';
+import {
+  Upload,
+  Button,
+  Modal,
+  Steps,
+  ToastFactory,
+  Card,
+  Avatar,
+  Table,
+  Progress,
+} from '@douyinfe/semi-ui';
 import './index.less';
 import { IconFile, IconHelpCircle, IconClear } from '@douyinfe/semi-icons';
 import * as XLSX from 'xlsx';
@@ -32,14 +42,10 @@ const STEP_1_UPLOAD = 0;
 const STEP_2_PREVIEW = 1;
 const STEP_3_FINISH = 2;
 
-const SetIsReadyForNextStepContext = React.createContext((isReady: boolean) => {
-});
-const SetCurrentErrorContext = React.createContext((currentErr: string) => {
-});
-const SetFileNameContext = React.createContext((filename: string) => {
-});
-const SetFileContext = React.createContext((file: File) => {
-});
+const SetIsReadyForNextStepContext = React.createContext((isReady: boolean) => {});
+const SetCurrentErrorContext = React.createContext((currentErr: string) => {});
+const SetFileNameContext = React.createContext((filename: string) => {});
+const SetFileContext = React.createContext((file: File) => {});
 
 //创建一个在页面顶部且置顶的弹窗
 export const ToastOnTop = ToastFactory.create({
@@ -47,15 +53,15 @@ export const ToastOnTop = ToastFactory.create({
 });
 
 /*
- 此函数用于把用户excel表格里的数据映射成调用API时传入的参数
+  此函数用于把用户excel表格里的数据映射成调用API时传入的参数
 
  参数:
    1.excelData:解析完的excel表格数据
    2.fields:飞书项目中的字段
 
- 返回值:
-   1.excelData:映射完的excel表格数据
-  */
+  返回值:
+    1.excelData:映射完的excel表格数据
+   */
 export const optionMapping = (excelData: Object[], fields: Field[]) => {
   const options = fields
     .filter((field: Field) => {
@@ -84,27 +90,28 @@ export const optionMapping = (excelData: Object[], fields: Field[]) => {
 };
 
 /*
-此处封装了用于检查表格是否存在错误的函数
+ 此处封装了用于检查表格是否存在错误的函数
 
-参数:
-  1.setHeaders:用于设置表头
-  2.setResolvedExcelData:用于设置解析完的excel数据
-  3.setExcelDataForDisplay:用于设置用于展示的excel数据
-  4.setFields:用于设置飞书项目的字段
-  5.file:未解析的excel文件
+ 参数:
+   1. headline:表头
 
-返回值:
-  1. 没有错误: {hasError:false, errFields:[]}
-  2. 有错误: {hasError:true, errFields:[<有问题的字段>]
- */
-export const checkErr = async (setHeaders: { (value: React.SetStateAction<string[]>): void; (arg0: string[]): void; }, setResolvedExcelData: {
-  (value: React.SetStateAction<Object[]>): void;
-  (arg0: Object[]): void;
-}, setExcelDataForDisplay: { (value: React.SetStateAction<Object[]>): void; (arg0: Object[]): void; }, setFields: {
-  (value: any): void;
-  (arg0: any): void;
-}, file: Blob): Promise<{ hasError: boolean, errors: string[] }> => {
-
+ 返回值:
+   1. 没有错误: {hasError:false, errFields:[]}
+   2. 有错误: {hasError:true, errFields:[<有问题的字段>]
+  */
+export const checkErr = async (
+  setHeaders: { (value: React.SetStateAction<string[]>): void; (arg0: string[]): void },
+  setResolvedExcelData: {
+    (value: React.SetStateAction<Object[]>): void;
+    (arg0: Object[]): void;
+  },
+  setExcelDataForDisplay: { (value: React.SetStateAction<Object[]>): void; (arg0: Object[]): void },
+  setFields: {
+    (value: any): void;
+    (arg0: any): void;
+  },
+  file: Blob,
+): Promise<{ hasError: boolean; errors: string[] }> => {
   /*
   此函数用于检查表头是否存在
 
@@ -117,7 +124,7 @@ export const checkErr = async (setHeaders: { (value: React.SetStateAction<string
    */
   const checkHeaders = (headers: string[], fieldNames: string[], errors: string[]): void => {
     let errFields: string[] = [];
-    headers.forEach((field) => {
+    headers.forEach(field => {
       if (fieldNames.indexOf(field) === -1) {
         errFields.push(field);
       }
@@ -153,13 +160,12 @@ export const checkErr = async (setHeaders: { (value: React.SetStateAction<string
         acc[field.field_name] = result; // 动态设置键和值
         return acc;
       }, {} as { [key: string]: string[] }); // 指定初始值和累加器的类型
-    excelData.forEach((row) => {
+    excelData.forEach(row => {
       const keys = Object.keys(row);
       const optionKeys = Object.keys(options);
       keys.forEach((key: string) => {
-        if (optionKeys.includes(key) && (!options[key].includes(row[key]))) {
-          if (!errFields.includes(row[key]))
-            errFields.push(`${key}-${row[key]}`);
+        if (optionKeys.includes(key) && !options[key].includes(row[key])) {
+          if (!errFields.includes(row[key])) errFields.push(`${key}-${row[key]}`);
         }
       });
     });
@@ -181,7 +187,9 @@ export const checkErr = async (setHeaders: { (value: React.SetStateAction<string
    */
   const checkRequired = (headers: string[], metaFields: MetaField[], errors: string[]): void => {
     const IS_REQUIRED = 1;
-    const requiredNames = metaFields.filter((field: Field) => field.is_required === IS_REQUIRED).map((field: Field) => field.field_name);
+    const requiredNames = metaFields
+      .filter((field: Field) => field.is_required === IS_REQUIRED)
+      .map((field: Field) => field.field_name);
     for (const name of requiredNames) {
       if (!headers.includes(name)) {
         errors.push(`缺少必填字段:${name}`);
@@ -189,41 +197,53 @@ export const checkErr = async (setHeaders: { (value: React.SetStateAction<string
     }
   };
 
-
   const reader = new FileReader();
   return new Promise((resolve, reject) => {
-    reader.onload = async (e) => {
+    reader.onload = async e => {
       if (e.target && e.target.result) {
         const data = new Uint8Array(e.target.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: 'array' });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         const jsonData: Object[] = XLSX.utils.sheet_to_json(worksheet);
+        console.log(jsonData);
         let headers = XLSX.utils.sheet_to_json(worksheet, { header: 1 })[0] as string[];
         //筛出所有的undef
-        headers = headers.filter((header) => header);
+        headers = headers.filter(header => header);
         setHeaders(headers);
         const context = await sdk.Context.load();
         const projectKey = context.mainSpace?.id;
         const workItemTypeKey = context.activeWorkItem?.workObjectId;
         try {
-          const fields = await axios.post(`${BASE_URL}/open_api/${projectKey}/field/all`, { work_item_type_key: workItemTypeKey }, HEADERS);
-          const metaFields = await axios.get(`${BASE_URL}/open_api/${projectKey}/work_item/${workItemTypeKey}/meta`, HEADERS);
+          const fields = await axios.post(
+            `${BASE_URL}/open_api/${projectKey}/field/all`,
+            { work_item_type_key: workItemTypeKey },
+            HEADERS,
+          );
+          const metaFields = await axios.get(
+            `${BASE_URL}/open_api/${projectKey}/work_item/${workItemTypeKey}/meta`,
+            HEADERS,
+          );
           setFields(fields.data.data);
-          console.log(metaFields)
           const jsonDataCopy = JSON.parse(JSON.stringify(jsonData));
           setResolvedExcelData(optionMapping(jsonDataCopy, fields.data.data));
           setExcelDataForDisplay(jsonData);
-          const fieldNames = fields.data.data.reduce(function(accumulator:string[]=[],current){
-            if(current.field_type_key==="compound_field"){
-              for(const field of current.compound_fields){
+          const fieldNames = fields.data.data.reduce(function (
+            accumulator: string[] = [],
+            current,
+          ) {
+            if (current.field_type_key === 'compound_field') {
+              for (const field of current.compound_fields) {
                 accumulator.push(field.field_name);
               }
             }
             accumulator.push(current.field_name);
             return accumulator;
-          }, []);
-          const metaFieldNames = metaFields.data.data.map((metaField: { field_name: string }) => metaField.field_name);
+          },
+          []);
+          const metaFieldNames = metaFields.data.data.map(
+            (metaField: { field_name: string }) => metaField.field_name,
+          );
           //用来储存错误
           let errors: string[] = [];
 
@@ -270,27 +290,29 @@ const StepContent = ({ currentStep }) => {
   const [columns, setColumns] = useState<Object[]>([]);
   const [fields, setFields] = useState<any>([]);
   const [progress, setProgress] = useState<number>(0);
-  const [isWorkCreated, setIsWorkCreated] = useState<boolean>(false);//防止工作项被重复创建
+  const [isWorkCreated, setIsWorkCreated] = useState<boolean>(false); //防止工作项被重复创建
 
   useEffect(() => {
     if (currentStep === STEP_2_PREVIEW && file) {
-      checkErr(setHeaders,setResolvedExcelData,setExcelDataForDisplay,setFields,file).then(res => {
-        if (res.hasError) {
-          setIsReadyForNextStep(false);
-          if (errors.length === 0) {
-            setErrors(res.errors);
+      checkErr(setHeaders, setResolvedExcelData, setExcelDataForDisplay, setFields, file)
+        .then(res => {
+          if (res.hasError) {
+            setIsReadyForNextStep(false);
+            if (errors.length === 0) {
+              setErrors(res.errors);
+            }
+            setCurrentError('此表格数据有问题');
+          } else {
+            setIsReadyForNextStep(true);
           }
-          setCurrentError('此表格数据有问题');
-        } else {
-          setIsReadyForNextStep(true);
-        }
-      }).catch(err => {
-        setIsReadyForNextStep(false);
-        setCurrentError(err);
-      });
+        })
+        .catch(err => {
+          setIsReadyForNextStep(false);
+          setCurrentError(err);
+        });
     }
     if (currentStep === STEP_3_FINISH && !isWorkCreated) {
-      setProgress(0)
+      setProgress(0);
       setIsReadyForNextStep(false);
       mergeTestCases(resolvedExcelData, fields, setProgress);
       setIsWorkCreated(true);
@@ -299,10 +321,12 @@ const StepContent = ({ currentStep }) => {
 
   useEffect(() => {
     if (headers.length !== 0) {
-      setColumns(headers.map(header => ({
-        title: header,
-        dataIndex: header,
-      })));
+      setColumns(
+        headers.map(header => ({
+          title: header,
+          dataIndex: header,
+        })),
+      );
     }
   }, [resolvedExcelData]);
 
@@ -310,11 +334,13 @@ const StepContent = ({ currentStep }) => {
     setIsReadyForNextStep(false);
     if (progress >= 99) {
       setIsReadyForNextStep(true);
-      ToastOnTop.success("导入完成,即将帮您自动跳转")
+      ToastOnTop.success('导入完成,即将帮您自动跳转');
       setTimeout(async () => {
         const context = await sdk.Context.load();
-        sdk.navigation.open(`https://project.feishu.cn/${context.mainSpace?.id}/test_cases/homepage`)
-      },1000)
+        sdk.navigation.open(
+          `https://project.feishu.cn/$%7Bcontext.mainSpace?.id}/test_cases/homepage`,
+        );
+      }, 1000);
     }
   }, [progress]);
 
@@ -350,16 +376,21 @@ const StepContent = ({ currentStep }) => {
       )}
       {currentStep === STEP_2_PREVIEW && (
         <div className={'current-step-container'}>
-           <h3 style={{color:"orange"}}>
-             ⚠️:当前版本无法导入任何需要选中人员选项的字段<br/>
-             ⚠️:请保证excel文件中没有空行
-           </h3>
-          {errors.map((err) => <div style={{ display: 'flex', alignItems: 'center' }}><IconClear
-            style={{ color: 'red' }} /><strong>{err}</strong></div>)}
+          <h3 style={{ color: 'orange' }}>⚠️:当前版本无法导入任何需要选中人员选项的字段</h3>
+          {errors.map(err => (
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <IconClear style={{ color: 'red' }} />
+              <strong>{err}</strong>
+            </div>
+          ))}
           <Table columns={columns} dataSource={excelDataForDisplay} pagination={{ pageSize: 5 }} />
         </div>
       )}
-      {currentStep === STEP_3_FINISH && <div><Progress percent={progress} showInfo={true} /></div>}
+      {currentStep === STEP_3_FINISH && (
+        <div>
+          <Progress percent={progress} showInfo={true} />
+        </div>
+      )}
     </>
   );
 };
@@ -374,7 +405,7 @@ const StepContent = ({ currentStep }) => {
 
   需要注意:currentStep的索引是从0开始的
    */
-const ProgressComponent = ({ currentStep }: { currentStep: number, setCurrentError: any }) => {
+const ProgressComponent = ({ currentStep }: { currentStep: number; setCurrentError: any }) => {
   return (
     <div className={'step-indicator'}>
       <Steps type="basic" current={currentStep} className={'steps'}>
@@ -384,8 +415,7 @@ const ProgressComponent = ({ currentStep }: { currentStep: number, setCurrentErr
       </Steps>
       <StepContent currentStep={currentStep} />
     </div>
-  )
-    ;
+  );
 };
 
 /*
@@ -430,10 +460,9 @@ const UploadComponent = () => {
         dragMainText={'点击上传文件或拖拽文件到这里'}
         dragSubText="仅支持.xlsx, .csv格式的文件"
         accept={'.xlsx, .csv'}
-        fileList={[]}//防止Update组件渲染filelist
+        fileList={[]} //防止Update组件渲染filelist
         beforeUpload={handleBeforeUpload}
-      >
-      </Upload>
+      ></Upload>
     </div>
   );
 };
@@ -452,7 +481,7 @@ export default hot(() => {
       setCurrentError('请稍等，正在加载');
     }
     if (currentStepRef.current === STEP_3_FINISH) {
-      setIsReadyForNextStep(false)
+      setIsReadyForNextStep(false);
       setCurrentError('导入中，请稍等');
       setOkText('完成');
     }
@@ -478,8 +507,7 @@ export default hot(() => {
     if (!isReadyForNextStep) {
       ToastOnTop.error(currentError);
       return;
-    }
-    else {
+    } else {
       if (currentStep === STEP_3_FINISH) {
         setVisible(false);
       } else {
@@ -510,9 +538,12 @@ export default hot(() => {
         okText={okText}
         className={'dashboard-container-modal'}
       >
-        <SetIsReadyForNextStepContext.Provider value={(isReady) => setIsReadyForNextStep(isReady)}>
-          <SetCurrentErrorContext.Provider value={(currentErr) => setCurrentError(currentErr)}>
-            <ProgressComponent currentStep={(currentStepRef.current)} setCurrentError={setCurrentError} />
+        <SetIsReadyForNextStepContext.Provider value={isReady => setIsReadyForNextStep(isReady)}>
+          <SetCurrentErrorContext.Provider value={currentErr => setCurrentError(currentErr)}>
+            <ProgressComponent
+              currentStep={currentStepRef.current}
+              setCurrentError={setCurrentError}
+            />
           </SetCurrentErrorContext.Provider>
         </SetIsReadyForNextStepContext.Provider>
       </Modal>
