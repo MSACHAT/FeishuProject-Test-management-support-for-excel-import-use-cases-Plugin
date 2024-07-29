@@ -7,9 +7,9 @@ import { ToastOnTop } from './features/Dashboard';
 // Get the login status of the plug-in
 // If return false, will call the function `authorize` with a code
 export async function isLogin() {
-  if (await validateJWT()) {
-    return true;
-  }
+  // if (await validateJWT()) {
+  //   return true;
+  // }
   return false;
 }
 
@@ -37,12 +37,15 @@ export const visibilityControl = async (type, key) => {
     const context = await sdk.Context.load();
     const projectKey = context.mainSpace?.id;
     try {
-      const works = await axios.get(`${BASE_URL}/open_api/${projectKey}/work_item/all-types`, HEADERS);
+      const works = await axios.get(
+        `${BASE_URL}/open_api/${projectKey}/work_item/all-types`,
+        HEADERS,
+      );
       console.log(works.data);
       //测试用例工作项的typeKey
-      const workTypeKeyOfTest = works.data.data.filter((work: {
-        api_name: string;
-      }) => work.api_name === 'test_cases')[0].type_key;
+      const workTypeKeyOfTest = works.data.data.filter(
+        (work: { api_name: string }) => work.api_name === 'test_cases',
+      )[0].type_key;
       //用户当前所在工作项目的typeKey
       const currentWorkTypeKey = context.activeWorkItem?.workObjectId;
       if (type === 'DASHBOARD' && workTypeKeyOfTest === currentWorkTypeKey) {
@@ -50,10 +53,8 @@ export const visibilityControl = async (type, key) => {
       } else {
         resolve(false);
       }
-    }
-    catch (error) {
-      ToastOnTop.error("Token已过期，请刷新加载插件");
-
+    } catch (error) {
+      ToastOnTop.error('Token已过期，请刷新加载插件');
     }
   });
 };
