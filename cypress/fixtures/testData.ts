@@ -407,23 +407,23 @@ export const multiLineStepData = [
     用例名称: '测试插件点位',
     前置条件: '1,2,3',
     执行步骤: '步骤1',
-    预期结果: '结果1',
+    结果预期: '结果1',
     优先级: 'option_1',
   },
   {
     执行步骤: '步骤2',
-    预期结果: ' 结果2',
+    结果预期: ' 结果2',
   },
   {
     用例名称: '测试插件点位2',
     前置条件: '1,2,3',
     执行步骤: '步骤1',
-    预期结果: '结果1',
+    结果预期: '结果3',
     优先级: 'option_1',
   },
   {
     执行步骤: '步骤2',
-    预期结果: ' 结果2',
+    结果预期: ' 结果4',
   },
 ];
 
@@ -444,16 +444,46 @@ export const multiLineStepDataOutput = [
         field_value: '步骤1',
       },
       {
-        field_key: 'field_2c7371',
-        field_value: '结果1',
+        field_key: 'field_f3e8ce',
+        field_value: [
+          [
+            {
+              field_key: 'field_bb1da7',
+              field_value: [
+                {
+                  content: [
+                    {
+                      text: '结果1',
+                      type: 'text',
+                    },
+                  ],
+                  type: 'paragraph',
+                },
+              ],
+            },
+            {
+              field_key: 'field_a5c6ef',
+              field_value: [
+                {
+                  content: [
+                    {
+                      attrs: { src: '' },
+                      text: ' 结果2',
+                      type: 'text',
+                    },
+                  ],
+                  type: 'paragraph',
+                },
+              ],
+            },
+          ],
+        ],
       },
       {
         field_key: 'priority',
-        field_value: [{ value: 'option_1' }],
-      },
-      {
-        field_key: 'field_e42a97',
-        field_value: [{ value: 'testcase_function' }, { value: 'testcase_compatibility' }],
+        field_value: {
+          value: 'option_1',
+        },
       },
     ],
   },
@@ -472,8 +502,46 @@ export const multiLineStepDataOutput = [
         field_value: '步骤1',
       },
       {
-        field_key: 'field_2c7371',
-        field_value: '结果1',
+        field_key: 'field_f3e8ce',
+        field_value: [
+          [
+            {
+              field_key: 'field_bb1da7',
+              field_value: [
+                {
+                  content: [
+                    {
+                      text: '结果3',
+                      type: 'text',
+                    },
+                  ],
+                  type: 'paragraph',
+                },
+              ],
+            },
+            {
+              field_key: 'field_a5c6ef',
+              field_value: [
+                {
+                  content: [
+                    {
+                      attrs: { src: '' },
+                      text: ' 结果4',
+                      type: 'text',
+                    },
+                  ],
+                  type: 'paragraph',
+                },
+              ],
+            },
+          ],
+        ],
+      },
+      {
+        field_key: 'priority',
+        field_value: {
+          value: 'option_1',
+        },
       },
     ],
   },

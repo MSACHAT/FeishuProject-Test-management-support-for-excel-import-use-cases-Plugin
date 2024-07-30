@@ -6,7 +6,7 @@ sdk.config({
 });
 export const PLUGIN_ID = 'MII_66977877C86E0004';
 
-export const PLUGIN_SECRET = 'EB3C51EAC95568C09190404ACCDBF274';
+export const PLUGIN_SECRET = process.env.PLUGIN_SECRET;
 
 export const HEADERS = {
   headers: {

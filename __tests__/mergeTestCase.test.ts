@@ -31,6 +31,7 @@ describe('正确合并测试用例', () => {
     const result = await mergeTestCases(multiLineStepData, fields, mockSetProgess);
     expect(result).toBeInstanceOf(Array);
     expect(result).toHaveLength(2);
+    expect(result).toEqual(multiLineStepDataOutput);
   });
 
   //包含不支持的字段
